@@ -66,10 +66,7 @@ def get_counts_from_lengths(lengths):
 
 def fit(data, start_params):
     mod = VonMisesMixture(data)
-    res = mod.fit(start_params=start_params, method='nm', disp=False)
     res = mod.fit(start_params=start_params, disp=False)
-    ## #refine optimization
-    ## res = mod.fit(start_params=res.params, method='ncg')
 
     return res
 
