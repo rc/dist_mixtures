@@ -300,13 +300,23 @@ class VonMisesMixture(GenericLikelihoodModel):
     #The following methods should be attached to the result instance, but I
     #don't have access to it without overwriting the fit method
 
-    def summary_params(self, params, name=''):
-        '''helper function to print the parameters (easier to interpret)
+    def get_summary_params(self, params):
+        '''helper function to return the parameters (easier to interpret)
 
         '''
         #temporary
         pr = get_probs(params)
         k_dist = (len(params) - 2) / 3 + 1
+
+        out = np.array([(params[2*ii], params[2*ii+1], pr[ii])
+                        for ii in range(k_dist)])
+        return out
+
+    def summary_params(self, params, name=''):
+        '''helper function to print the parameters (easier to interpret)
+
+        '''
+        sparams = self.get_summary_params(params)
 
         if name:
             postfix = ' (%s)'%name
@@ -314,10 +324,9 @@ class VonMisesMixture(GenericLikelihoodModel):
             postfix = ''
 
         print '\nEstimated distributions%s' % postfix
-        for ii in range(k_dist):
-            print 'dist%1d: shape=%6.4f, loc=%6.4f, prob=%6.4f' % (
-                                ii, params[2*ii], params[2*ii+1], pr[ii])
-
+        for ii, pp in enumerate(sparams):
+            print 'dist%1d: shape=%6.4f, loc=%6.4f, prob=%6.4f' \
+                  % ((ii,) + tuple(pp))
 
     def plot_dist(self, params, plot_kde=False):
         '''plot the pdf given parameters and histogram and kernel estimate
@@ -331,17 +340,19 @@ class VonMisesMixture(GenericLikelihoodModel):
 
         pdf_m, pdf_d = self.pdf_mix(params, x0, return_comp=True)
         plt.plot(x0, pdf_m, lw=2, label='mixture')
-        for pdf_i in pdf_d:
-            plt.plot(x0, pdf_i, lw=2)
-        plt.hist(self.endog, bins=50, normed=True, alpha=0.5)
 
         kde = GaussianKDE(self.endog, (0, 0.5))
         pdf_kde = kde(x0)
         plt.plot(x0, pdf_kde, lw=2, label='kde')
+
+        for ii, pdf_i in enumerate(pdf_d):
+            plt.plot(x0, pdf_i, lw=2, label='dist%d' % ii)
+        plt.hist(self.endog, bins=50, normed=True, alpha=0.2, color='b')
+
         #plt.xlim = (-np.pi, np.pi)
         ax = plt.gca()
         ax.set_xlim(-np.pi, np.pi)
-        plt.legend()
+        plt.legend(loc='best')
         return fig
 
     def plot_cdf(self, params, others=None, names=None):
