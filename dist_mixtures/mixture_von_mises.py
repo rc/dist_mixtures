@@ -267,6 +267,27 @@ class VonMisesMixture(GenericLikelihoodModel):
         else:
             return cdf_
 
+    def rvs_mix(self, params, size=100, ret_sizes=False):
+        '''Random variates of the mixture distribution.
+        '''
+        k_dist = (len(params) - 2) / 3 + 1 #number of distributions in mixture
+
+        probs = get_probs2(params[-k_dist+1:])
+        sizes = np.ceil(probs * size).astype(np.int32)
+
+        rvs = []
+        for ii in range(k_dist):
+            rvs.append(stats.vonmises.rvs(params[2*ii],
+                                           loc=params[2*ii+1],
+                                           size=sizes[ii]))
+        rvs = np.concatenate(rvs)
+
+        if ret_sizes:
+            return rvs, sizes
+
+        else:
+            return rvs
+
     def loglikeobs(self, params, x=None):
         '''loglikelihood of observations of a mixture of von mises distributions
         '''
@@ -341,9 +362,10 @@ class VonMisesMixture(GenericLikelihoodModel):
         pdf_m, pdf_d = self.pdf_mix(params, x0, return_comp=True)
         plt.plot(x0, pdf_m, lw=2, label='mixture')
 
-        kde = GaussianKDE(self.endog, (0, 0.5))
-        pdf_kde = kde(x0)
-        plt.plot(x0, pdf_kde, lw=2, label='kde')
+        if plot_kde:
+            kde = GaussianKDE(self.endog, (0, 0.5))
+            pdf_kde = kde(x0)
+            plt.plot(x0, pdf_kde, lw=2, label='kde')
 
         for ii, pdf_i in enumerate(pdf_d):
             plt.plot(x0, pdf_i, lw=2, label='dist%d' % ii)
