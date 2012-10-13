@@ -158,8 +158,11 @@ def main():
 
         print 'simulated counts range:', counts.min(), counts.max()
 
-        nbins = 45
-        ax2.hist(fdata, bins=nbins-1, range=data[[0, -1], 0], alpha=0.5)
+        dd = data[1, 0] - data[0, 0]
+        all_bins = np.r_[data[:, 0] - 1e-8, data[-1, 0] + dd]
+        bins = all_bins[::4]
+
+        ax2.hist(fdata, bins=bins, alpha=0.5)
         ax2.set_title('raw data histogram')
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
@@ -176,6 +179,25 @@ def main():
         figname = os.path.join(output_dir, dir_base + '-fit-%d.png'
                                % options.n_components)
         fig.savefig(figname)
+
+        try:
+            rvs, sizes = res.model.rvs_mix(res.params, size=fdata.shape[0],
+                                           ret_sizes=True)
+        except ValueError:
+            pass
+
+        else:
+            rvs = fix_range(rvs)
+
+            fig = plt.figure(3)
+            plt.clf()
+            plt.title('original (blue, %d values) vs.'
+                      ' simulated (green, %d values)' % tuple(sizes))
+            plt.hist(fdata, bins=bins, alpha=0.5)
+            plt.hist(rvs, bins=bins, alpha=0.5)
+            figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
+                                   % options.n_components)
+            fig.savefig(figname)
 
         fd = open(log_name, 'a')
         fd.write('%s: %d: %s\n' % (dir_base, len(base_names),
