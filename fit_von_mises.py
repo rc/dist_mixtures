@@ -36,16 +36,22 @@ def load_data(filenames, transform=None):
     return merged_data
 
 def transform_2pi(data):
+    data = np.asarray(data)
+
     out = 2 * data * np.pi / 180.0
     return out
 
 def transform_pi_deg(data, neg_shift=False):
+    data = np.asarray(data)
+
     out = 90.0 * data / np.pi
     if neg_shift:
-        out = np.where(out > 0.0, out, out + 180.0)
+        out = np.where(out >= 0.0, out, out + 180.0)
     return out
 
 def fix_range(data):
+    data = np.asarray(data)
+
     data = data.copy()
     while 1:
         ii = np.where(data < -np.pi)[0]
@@ -62,6 +68,8 @@ def get_counts_from_lengths(lengths):
     """
     Get simulated counts corresponding to lengths.
     """
+    lengths = np.asarray(lengths)
+
     lo = lengths.min()
     counts = ((10.0 / lo) * lengths).astype(np.int32)
 
