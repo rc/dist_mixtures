@@ -73,6 +73,35 @@ def fit(data, start_params):
 
     return res
 
+def plot_data(data, fdata, bins):
+    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
+
+    td0 = transform_pi_deg(data[:, 0], neg_shift=True)
+    ip = np.argsort(td0)
+
+    ax1.plot(td0[ip], data[ip, 1])
+    ax1.set_title('raw data')
+    ax1.set_xlim([0, 180])
+
+    ax2.hist(transform_pi_deg(fdata, neg_shift=True), bins=bins, alpha=0.5)
+    ax2.set_title('raw data histogram (counts)')
+    ax2.set_xlim([0, 180])
+
+    return fig
+
+def plot_rvs_comparison(fdata, rvs, sizes, bins):
+    fig = plt.figure(3)
+    plt.clf()
+    plt.title('original (blue, %d) vs. simulated (green, %s)'
+              % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)))
+    plt.hist(transform_pi_deg(fdata, neg_shift=True),
+             bins=bins, alpha=0.5)
+    plt.hist(transform_pi_deg(rvs, neg_shift=True),
+             bins=bins, alpha=0.5)
+    plt.axis(xmin=0, xmax=180)
+
+    return fig
+
 help = {
     'n_components' :
     'number of components of the mixture [default: %default]',
@@ -143,13 +172,6 @@ def main():
 
         print 'data range:', data[:, 1].min(), data[:, 1].max()
 
-        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
-        td0 = transform_pi_deg(data[:, 0], neg_shift=True)
-        ip = np.argsort(td0)
-        ax1.plot(td0[ip], data[ip, 1])
-        ax1.set_title('raw data')
-        ax1.set_xlim([0, 180])
-
         # Simulate the "random process" the histogram was done from.
         counts = get_counts_from_lengths(data[:, 1])
         fdata = np.repeat(data[:, 0], counts)
@@ -161,11 +183,8 @@ def main():
         all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
         bins = all_bins[::4]
 
-        ax2.hist(transform_pi_deg(fdata, neg_shift=True), bins=bins, alpha=0.5)
-        ax2.set_title('raw data histogram')
-        ax2.set_xlim([0, 180])
-
         figname = os.path.join(output_dir, dir_base + '-data.png')
+        fig = plot_data(data, fdata, bins)
         fig.savefig(figname)
 
         res = fit(fdata, start_params)
@@ -189,17 +208,9 @@ def main():
         else:
             rvs = fix_range(rvs)
 
-            fig = plt.figure(3)
-            plt.clf()
-            plt.title('original (blue, %d) vs. simulated (green, %s)'
-                      % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)))
-            plt.hist(transform_pi_deg(fdata, neg_shift=True),
-                     bins=bins, alpha=0.5)
-            plt.hist(transform_pi_deg(rvs, neg_shift=True),
-                     bins=bins, alpha=0.5)
-            plt.axis(xmin=0, xmax=180)
             figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
                                    % options.n_components)
+            fig = plot_rvs_comparison(fdata, rvs, sizes, bins)
             fig.savefig(figname)
 
         sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
