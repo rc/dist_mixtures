@@ -349,7 +349,7 @@ class VonMisesMixture(GenericLikelihoodModel):
             print 'dist%1d: shape=%6.4f, loc=%6.4f, prob=%6.4f' \
                   % ((ii,) + tuple(pp))
 
-    def plot_dist(self, params, plot_kde=False):
+    def plot_dist(self, params, plot_kde=False, xtransform=None):
         '''plot the pdf given parameters and histogram and kernel estimate
 
         helper for visual evaluation of fit and of components
@@ -357,24 +357,44 @@ class VonMisesMixture(GenericLikelihoodModel):
         '''
         import matplotlib.pyplot as plt
         x0 = np.linspace(-np.pi, np.pi, 51)
+
+        if xtransform is None:
+            x0t = x0
+            ip = slice(0, len(x0))
+
+        else:
+            x0t = xtransform(x0)
+            ip = np.argsort(x0t)
+            x0t = x0t[ip]
+
         fig = plt.figure()
 
         pdf_m, pdf_d = self.pdf_mix(params, x0, return_comp=True)
-        plt.plot(x0, pdf_m, lw=2, label='mixture')
+        plt.plot(x0t, pdf_m[ip], lw=2, label='mixture')
 
         if plot_kde:
             kde = GaussianKDE(self.endog, (0, 0.5))
             pdf_kde = kde(x0)
-            plt.plot(x0, pdf_kde, lw=2, label='kde')
+            plt.plot(x0t, pdf_kde[ip], lw=2, label='kde')
 
         for ii, pdf_i in enumerate(pdf_d):
-            plt.plot(x0, pdf_i, lw=2, label='dist%d' % ii)
-        plt.hist(self.endog, bins=50, normed=True, alpha=0.2, color='b')
+            plt.plot(x0t, pdf_i[ip], lw=2, label='dist%d' % ii)
 
-        #plt.xlim = (-np.pi, np.pi)
+        _, _, patches = plt.hist(self.endog, bins=50, normed=True,
+                                 alpha=0.2, color='b')
+        if xtransform is not None:
+            for patch in patches:
+                x, w = patch.get_x(), patch.get_width()
+                x1t, x2t = xtransform([x, x + w])
+                if x1t > x2t:
+                    x1t = x
+                patch.set_x(x1t)
+                patch.set_width(x2t - x1t)
+
         ax = plt.gca()
-        ax.set_xlim(-np.pi, np.pi)
+        ax.set_xlim([x0t[0], x0t[-1]])
         plt.legend(loc='best')
+
         return fig
 
     def plot_cdf(self, params, others=None, names=None):
