@@ -39,8 +39,10 @@ def transform_2pi(data):
     out = 2 * data * np.pi / 180.0
     return out
 
-def transform_pi_deg(data):
+def transform_pi_deg(data, neg_shift=False):
     out = 90.0 * data / np.pi
+    if neg_shift:
+        out = np.where(out > 0.0, out, out + 180.0)
     return out
 
 def fix_range(data):
@@ -142,9 +144,11 @@ def main():
         print 'data range:', data[:, 1].min(), data[:, 1].max()
 
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
-        ax1.plot(data[:, 0], data[:, 1])
-        ax1.set_title('raw data, transformed angles')
-        ax1.axis('tight')
+        td0 = transform_pi_deg(data[:, 0], neg_shift=True)
+        ip = np.argsort(td0)
+        ax1.plot(td0[ip], data[ip, 1])
+        ax1.set_title('raw data')
+        ax1.set_xlim([0, 180])
 
         # Simulate the "random process" the histogram was done from.
         counts = get_counts_from_lengths(data[:, 1])
@@ -152,13 +156,14 @@ def main():
 
         print 'simulated counts range:', counts.min(), counts.max()
 
-        dd = data[1, 0] - data[0, 0]
-        all_bins = np.r_[data[:, 0] - 1e-8, data[-1, 0] + dd]
+        ddata = np.sort(transform_pi_deg(data[:, 0], neg_shift=True))
+        dd = ddata[1] - ddata[0]
+        all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
         bins = all_bins[::4]
 
-        ax2.hist(fdata, bins=bins, alpha=0.5)
+        ax2.hist(transform_pi_deg(fdata, neg_shift=True), bins=bins, alpha=0.5)
         ax2.set_title('raw data histogram')
-        ax2.axis('tight')
+        ax2.set_xlim([0, 180])
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
         fig.savefig(figname)
@@ -188,15 +193,18 @@ def main():
             plt.clf()
             plt.title('original (blue, %d) vs. simulated (green, %s)'
                       % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)))
-            plt.hist(fdata, bins=bins, alpha=0.5)
-            plt.hist(rvs, bins=bins, alpha=0.5)
-            plt.axis('tight')
+            plt.hist(transform_pi_deg(fdata, neg_shift=True),
+                     bins=bins, alpha=0.5)
+            plt.hist(transform_pi_deg(rvs, neg_shift=True),
+                     bins=bins, alpha=0.5)
+            plt.axis(xmin=0, xmax=180)
             figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
                                    % options.n_components)
             fig.savefig(figname)
 
         sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
-        sparams[:, 0] = transform_pi_deg(fix_range(sparams[:, 0]))
+        sparams[:, 0] = transform_pi_deg(fix_range(sparams[:, 0]),
+                                         neg_shift=True)
         flags = [''] * 2
         if not (sparams[:, 1] > 0.0).all():
             flags[0] = '*'
