@@ -144,6 +144,7 @@ def main():
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
         ax1.plot(data[:, 0], data[:, 1])
         ax1.set_title('raw data, transformed angles')
+        ax1.axis('tight')
 
         # Simulate the "random process" the histogram was done from.
         counts = get_counts_from_lengths(data[:, 1])
@@ -157,6 +158,7 @@ def main():
 
         ax2.hist(fdata, bins=bins, alpha=0.5)
         ax2.set_title('raw data histogram')
+        ax2.axis('tight')
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
         fig.savefig(figname)
@@ -184,10 +186,11 @@ def main():
 
             fig = plt.figure(3)
             plt.clf()
-            plt.title('original (blue, %d values) vs.'
-                      ' simulated (green, %d values)' % tuple(sizes))
+            plt.title('original (blue, %d) vs. simulated (green, %s)'
+                      % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)))
             plt.hist(fdata, bins=bins, alpha=0.5)
             plt.hist(rvs, bins=bins, alpha=0.5)
+            plt.axis('tight')
             figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
                                    % options.n_components)
             fig.savefig(figname)
