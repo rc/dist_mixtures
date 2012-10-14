@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from dist_mixtures.mixture_von_mises import VonMisesMixture
 import ioutils as io
+from logs import CSVLog
 
 usage = '%prog [options] pattern data_dir output_dir\n' + __doc__.rstrip()
 
@@ -121,17 +122,9 @@ def main():
 
     io.ensure_path(output_dir)
 
-    log_name = os.path.join(output_dir, 'log.txt')
-    fd = open(log_name, 'w')
-    fd.write('# case: no. of files: filenames\n')
-    fd.write('# flags ' + '; '.join(['mu%d kappa%d prob%d' % (ii, ii, ii)
-                               for ii in range(options.n_components)]) + '\n')
-    fd.write('# -----\n')
-    fd.write('# flags:\n')
-    fd.write('# ! ... line with a negative kappa\n')
-    fd.write('# @ ... fit did not converge\n')
-    fd.write('# mu (location) is in degrees in [-90, 90[\n')
-    fd.close()
+    log_name = os.path.join(output_dir, 'log.csv')
+    log = CSVLog(log_name, options.n_components)
+    log.write_header()
 
     get_data = io.locate_files(pattern, data_dir,
                                dir_pattern=options.dir_pattern,
@@ -199,21 +192,16 @@ def main():
                                    % options.n_components)
             fig.savefig(figname)
 
-        fd = open(log_name, 'a')
-        fd.write('%s: %d: %s\n' % (dir_base, len(base_names),
-                                 ', '.join(base_names)))
-        sparams = res.model.get_summary_params(res.params)
-        sparams[:, 1] = transform_pi_deg(fix_range(sparams[:, 1]))
-        aux = '; '.join(['% 6.2f % 5.4f %6.4f'
-                         % (pp[1], pp[0], pp[2]) for pp in sparams])
-        flags = [' '] * 3
-        if not (sparams[:, 0] > 0.0).all():
-            flags[0] = '!'
+        sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
+        sparams[:, 0] = transform_pi_deg(fix_range(sparams[:, 0]))
+        flags = [''] * 2
+        if not (sparams[:, 1] > 0.0).all():
+            flags[0] = '*'
         if not res.mle_retvals['converged']:
-            flags[1] = '@'
+            flags[1] = '*'
         print 'flags:', flags
-        fd.write(''.join(flags) + aux + '\n')
-        fd.close()
+
+        log.write_row(dir_base, base_names, sparams, flags)
 
         if options.show:
             plt.show()
