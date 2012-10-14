@@ -81,32 +81,36 @@ def fit(data, start_params):
 
     return res
 
-def plot_data(data, fdata, bins):
+def plot_data(data, fdata, bins, neg_shift):
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
 
-    td0 = transform_pi_deg(data[:, 0], neg_shift=True)
+    td0 = transform_pi_deg(data[:, 0], neg_shift=neg_shift)
     ip = np.argsort(td0)
+    xmin, xmax = (0, 180) if neg_shift else (-90, 90)
 
     ax1.plot(td0[ip], data[ip, 1])
     ax1.set_title('raw data')
-    ax1.set_xlim([0, 180])
+    ax1.set_xlim([xmin, xmax])
 
-    ax2.hist(transform_pi_deg(fdata, neg_shift=True), bins=bins, alpha=0.5)
+    ax2.hist(transform_pi_deg(fdata, neg_shift=neg_shift),
+             bins=bins, alpha=0.5)
     ax2.set_title('raw data histogram (counts)')
-    ax2.set_xlim([0, 180])
+    ax2.set_xlim([xmin, xmax])
 
     return fig
 
-def plot_rvs_comparison(fdata, rvs, sizes, bins):
+def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
     fig = plt.figure(3)
     plt.clf()
     plt.title('original (blue, %d) vs. simulated (green, %s)'
               % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)))
-    plt.hist(transform_pi_deg(fdata, neg_shift=True),
+    plt.hist(transform_pi_deg(fdata, neg_shift=neg_shift),
              bins=bins, alpha=0.5)
-    plt.hist(transform_pi_deg(rvs, neg_shift=True),
+    plt.hist(transform_pi_deg(rvs, neg_shift=neg_shift),
              bins=bins, alpha=0.5)
-    plt.axis(xmin=0, xmax=180)
+
+    xmin, xmax = (0, 180) if neg_shift else (-90, 90)
+    plt.axis(xmin=xmin, xmax=xmax)
 
     return fig
 
@@ -161,6 +165,8 @@ def main():
 
     io.ensure_path(output_dir)
 
+    neg_shift = True
+
     log_name = os.path.join(output_dir, 'log.csv')
     log = CSVLog(log_name, options.n_components)
     log.write_header()
@@ -186,13 +192,13 @@ def main():
 
         print 'simulated counts range:', counts.min(), counts.max()
 
-        ddata = np.sort(transform_pi_deg(data[:, 0], neg_shift=True))
+        ddata = np.sort(transform_pi_deg(data[:, 0], neg_shift=neg_shift))
         dd = ddata[1] - ddata[0]
         all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
         bins = all_bins[::4]
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
-        fig = plot_data(data, fdata, bins)
+        fig = plot_data(data, fdata, bins, neg_shift=neg_shift)
         fig.savefig(figname)
 
         res = fit(fdata, start_params)
@@ -200,7 +206,7 @@ def main():
         res.model.summary_params(res.params,
                                  name='%d components' % options.n_components)
 
-        xtr = lambda x: transform_pi_deg(x, neg_shift=True)
+        xtr = lambda x: transform_pi_deg(x, neg_shift=neg_shift)
         fig = res.model.plot_dist(res.params, xtransform=xtr)
         fig.axes[0].set_title('Estimated distribution')
 
@@ -219,12 +225,13 @@ def main():
 
             figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
                                    % options.n_components)
-            fig = plot_rvs_comparison(fdata, rvs, sizes, bins)
+            fig = plot_rvs_comparison(fdata, rvs, sizes, bins,
+                                      neg_shift=neg_shift)
             fig.savefig(figname)
 
         sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
         sparams[:, 0] = transform_pi_deg(fix_range(sparams[:, 0]),
-                                         neg_shift=True)
+                                         neg_shift=neg_shift)
         flags = [''] * 2
         if not (sparams[:, 1] > 0.0).all():
             flags[0] = '*'
