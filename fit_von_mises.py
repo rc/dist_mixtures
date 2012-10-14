@@ -81,6 +81,46 @@ def fit(data, start_params):
 
     return res
 
+def split_equal_areas(data, x0, x1):
+    """
+    Split histogram-like `data` into two parts with equal areas between `x0`
+    and `x1`.
+    """
+    x, y = data[:, 0].copy(), data[:, 1]
+    n_data = data.shape[0]
+
+    dx = x[1] - x[0]
+
+    xs = x - 0.5 * dx
+
+    i0 = np.searchsorted(xs, x0)
+    if i0 == 0:
+        sub0 = 0.0
+        i0 = 1
+
+    else:
+        sub0 = (x0 - xs[i0 - 1]) * y[i0 - 1]
+
+    i1 = np.searchsorted(xs, x1)
+    if i1 == n_data:
+        sub1 = 0.0
+
+    else:
+        sub1 = (xs[i1] - x1) * y[i1 - 1]
+
+    yy = y[i0 - 1:i1] * dx
+    area = np.sum(yy) - sub0 - sub1
+
+    ca = np.cumsum(yy) - sub0
+    ih = np.searchsorted(ca, 0.5 * area)
+
+    da = ca[ih] - 0.5 * area
+    dxh = da / y[i0 - 1 + ih]
+
+    xh = xs[i0 + ih] - dxh
+
+    return 0.5 * area, xh
+
 def plot_data(data, fdata, bins, neg_shift):
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
 
@@ -113,6 +153,27 @@ def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
     plt.axis(xmin=xmin, xmax=xmax)
 
     return fig
+
+def draw_areas(ax, x0, xm, x1, arh1, arh2):
+    from matplotlib.patches import Rectangle
+
+    w = xm - x0
+    h0 = arh1 / w
+    rect = Rectangle((x0, 0), w, h0, color='gray', alpha=0.3)
+    ax.add_patch(rect)
+    xh = 0.5 * (x0 + xm)
+    ax.vlines(xh, 0, h0)
+    ax.text(xh, 0.25 * h0, '%+.2f' % (xh - xm))
+
+    w = x1 - xm
+    h1 = arh2 / w
+    rect = Rectangle((xm, 0), w, h1, color='gray', alpha=0.3)
+    ax.add_patch(rect)
+    xh = 0.5 * (xm + x1)
+    ax.vlines(xh, 0, h1)
+    ax.text(xh, 0.75 * h1, '%+.2f' % (xh - xm))
+
+    ax.text(xm, 0.25 * (h0 + h1), '%.2f' % xm)
 
 help = {
     'n_components' :
