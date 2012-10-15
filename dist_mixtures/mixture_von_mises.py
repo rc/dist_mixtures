@@ -273,13 +273,13 @@ class VonMisesMixture(GenericLikelihoodModel):
         k_dist = (len(params) - 2) / 3 + 1 #number of distributions in mixture
 
         probs = get_probs2(params[-k_dist+1:])
-        sizes = np.ceil(probs * size).astype(np.int32)
+        sizes = np.ceil(probs[:k_dist] * size).astype(np.int32)
 
         rvs = []
         for ii in range(k_dist):
             rvs.append(stats.vonmises.rvs(params[2*ii],
-                                           loc=params[2*ii+1],
-                                           size=sizes[ii]))
+                                          loc=params[2*ii+1],
+                                          size=sizes[ii]))
         rvs = np.concatenate(rvs)
 
         if ret_sizes:
