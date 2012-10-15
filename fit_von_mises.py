@@ -81,6 +81,26 @@ def fit(data, start_params):
 
     return res
 
+def get_area_angles(data, neg_shift=False):
+    aux = transform_pi_deg(data[:, 0], neg_shift=neg_shift)
+    ip = np.argsort(aux)
+    aux = aux[ip]
+    ddd = np.c_[aux[:, None], data[ip, 1:]]
+
+    # Mirror the first data point.
+    dx = aux[1] - aux[0]
+    ddd = np.r_[ddd, [[ddd[-1, 0] + dx, ddd[0, 1]]]]
+
+    xmin, xmax = -1000, 1000
+    arh, xm = split_equal_areas(ddd, xmin, xmax)
+    arh1, x0 = split_equal_areas(ddd, xmin, xm)
+    arh2, x1 = split_equal_areas(ddd, xm, xmax)
+
+    print x0, xm, x1
+    print arh, arh1, arh2, arh1 - arh2, arh - (arh1 + arh2)
+
+    return x0, xm, x1, arh1, arh2
+
 def split_equal_areas(data, x0, x1):
     """
     Split histogram-like `data` into two parts with equal areas between `x0`
@@ -185,6 +205,9 @@ help = {
     ' mu should be given in degrees in [-90, 90[.',
     'dir_pattern' :
     'pattern that subdrectories should match [default: %default]',
+    'area_angles' :
+    'compute and draw angles of two systems of fibres determined by'
+    ' equal histogram areas',
     'show' :
     'show the figures',
 }
@@ -200,6 +223,9 @@ def main():
     parser.add_option('-d', '--dir-pattern', metavar='pattern',
                       action='store', dest='dir_pattern',
                       default='*', help=help['dir_pattern'])
+    parser.add_option('-a', '--area-angles',
+                      action='store_true', dest='area_angles',
+                      default=False, help=help['area_angles'])
     parser.add_option('-s', '--show',
                       action='store_true', dest='show',
                       default=False, help=help['show'])
@@ -260,6 +286,11 @@ def main():
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
         fig = plot_data(data, fdata, bins, neg_shift=neg_shift)
+
+        if options.area_angles:
+            draw_areas(fig.axes[0],
+                       *get_area_angles(data, neg_shift=neg_shift))
+
         fig.savefig(figname)
 
         res = fit(fdata, start_params)
