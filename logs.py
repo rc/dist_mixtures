@@ -15,7 +15,7 @@ class CSVLog(object):
     def write_header(self):
         fd = open(self.log_name, 'w')
 
-        header = ['directory', 'negative kappa flag', 'fit convergence flag']
+        header = ['directory', 'negative kappa flag', 'fit not converged flag']
         for ii in range(self.n_components):
             header.extend(['mu%d' % ii, 'kappa%d' % ii, 'prob%d' % ii])
         header.extend(['nllf', 'aic', 'bic', 'number of files', 'filenames'])
