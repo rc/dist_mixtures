@@ -300,7 +300,9 @@ def main():
             flags[1] = '*'
         print 'flags:', flags
 
-        log.write_row(dir_base, base_names, sparams, flags)
+        fit_criteria = [-res.llf, res.aic, res.bic]
+
+        log.write_row(dir_base, base_names, sparams, flags, fit_criteria)
 
         if options.show:
             plt.show()
