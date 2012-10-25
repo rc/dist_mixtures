@@ -26,11 +26,11 @@ if __name__ == '__main__':
     
     pattern = '*ImageJ.txt'
     data_dir = '../analysis/test-data'
-    output_dir = '../analysis/tmp_bfgs_90_2_rs'
+    output_dir = '../analysis/tmp_bfgs_rsprob_sp_2_master_allbins_hist'
     
     #end options
-    options.show = True
-    options.params = '90, 2'
+    #options.show = True
+    #options.params = '0, 5'
 
     
 
@@ -38,7 +38,8 @@ if __name__ == '__main__':
     n2 = 2 * options.n_components
     if options.params is None:
         # Zeros for mu, twos for kappa.
-        start_params[:n2:2] = 2.0
+        start_params[:n2:2] = 2.0 + np.random.uniform(-0.1, 0.1, options.n_components)
+        start_params[:n2:2] = 5.0 + np.random.uniform(-0.5, 0.5, options.n_components)
 
     else:
         aux = np.array([float(ii) for ii in options.params.split(',')])

@@ -77,7 +77,13 @@ def get_counts_from_lengths(lengths):
 
 def fit(data, start_params):
     mod = VonMisesMixture(data)
-    res = mod.fit(start_params=start_params, method='bfgs', disp=False)
+    #with master of statsmodels we can use bfgs
+    #because the objective function is now normalized with 1/nobs we can
+    #increase the gradient tolerance gtol
+    #res = mod.fit(start_params=start_params, method='nm', disp=True)
+    #res = mod.fit(start_params=res.params, method='bfgs', disp=True) #False)
+    res = mod.fit(start_params=start_params, method='bfgs', disp=True,
+                  gtol=1e-9) #False)
 
     return res
 
