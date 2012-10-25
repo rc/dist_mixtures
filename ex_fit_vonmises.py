@@ -81,7 +81,7 @@ if __name__ == '__main__':
         ddata = np.sort(transform_pi_deg(data[:, 0], neg_shift=neg_shift))
         dd = ddata[1] - ddata[0]
         all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
-        bins = all_bins[::4]
+        bins = all_bins #[::4]
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
         fig = plot_data(data, fdata, bins, neg_shift=neg_shift)
@@ -98,7 +98,7 @@ if __name__ == '__main__':
                                  name='%d components' % options.n_components)
 
         xtr = lambda x: transform_pi_deg(x, neg_shift=neg_shift)
-        fig = res.model.plot_dist(res.params, xtransform=xtr)
+        fig = res.model.plot_dist(res.params, xtransform=xtr, n_bins=180)
         fig.axes[0].set_title('Estimated distribution')
 
         figname = os.path.join(output_dir, dir_base + '-fit-%d.png'

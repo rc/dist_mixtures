@@ -349,7 +349,7 @@ class VonMisesMixture(GenericLikelihoodModel):
             print 'dist%1d: shape=%6.4f, loc=%6.4f, prob=%6.4f' \
                   % ((ii,) + tuple(pp))
 
-    def plot_dist(self, params, plot_kde=False, xtransform=None):
+    def plot_dist(self, params, plot_kde=False, xtransform=None, n_bins=50):
         '''plot the pdf given parameters and histogram and kernel estimate
 
         helper for visual evaluation of fit and of components
@@ -380,7 +380,7 @@ class VonMisesMixture(GenericLikelihoodModel):
         for ii, pdf_i in enumerate(pdf_d):
             plt.plot(x0t, pdf_i[ip], lw=2, label='dist%d' % ii)
 
-        _, _, patches = plt.hist(self.endog, bins=50, normed=True,
+        _, _, patches = plt.hist(self.endog, bins=n_bins, normed=True,
                                  alpha=0.2, color='b')
         if xtransform is not None:
             for patch in patches:
