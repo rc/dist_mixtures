@@ -14,25 +14,25 @@ class Store(object):
     pass
 
 if __name__ == '__main__':
-    
+
     options = Store()
     #options
     #default
-    options.n_components = 2     # 2 default
+    options.n_components = 1     # 2 default
     options.params = None        # None default
     options.dir_pattern = '*'    # '*' default
     options.area_angles = False  # False default
     options.show = False         # False default
-    
+
     pattern = '*ImageJ.txt'
     data_dir = '../analysis/test-data'
-    output_dir = '../analysis/tmp_bfgs_rsprob_sp_2_master_allbins_hist'
-    
+    output_dir = '../analysis/tmp_bfgs_rsprob_sp_1_master_allbins_hist_'
+
     #end options
     #options.show = True
     #options.params = '0, 5'
 
-    
+
 
     start_params = np.zeros(options.n_components * 3 - 1)
     n2 = 2 * options.n_components
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         aux = np.array([float(ii) for ii in options.params.split(',')])
         start_params[:n2:2] = aux[1::2] # kappa.
         start_params[1:n2:2] = transform_2pi(aux[0::2]) # mu.
-    
+
     start_params[n2:] = np.random.uniform(-0.1, 0.1, options.n_components - 1)
 
     print 'starting parameters:', start_params
@@ -134,6 +134,27 @@ if __name__ == '__main__':
         fit_criteria = [-res.llf, res.aic, res.bic]
 
         log.write_row(dir_base, base_names, sparams, flags, fit_criteria)
+
+        #goodness-of-fit chisquare test
+
+        #TODO: we know bins of fdata
+        uni_fdata = np.unique(fdata)
+        xx_cdf = uni_fdata + (2 * np.pi / 180) / 2
+        #TODO: bug: cdf_mix doesn't work if n_components=1
+        tr = lambda x: np.remainder(x + np.pi, 2*np.pi) - np.pi
+        if options.n_components == 1:
+            #cdf = stats.vonmises._cdf(tr(xx_cdf - res.params[1] - np.pi * (np.sign(res.params[0])==-1)), np.abs(res.params[0]))
+            #looks ok, cdf > 1 or cdf < 0 to make it easier to wrap around circle
+            #subtract cdf of starting point
+            cdf = stats.vonmises.cdf((xx_cdf), res.params[0], loc=res.params[1])
+        else:
+            cdf = res.model.cdf_mix(res.params, xx_cdf)
+        #TODO: problems, cdf > 1, bin boundaries merge 1st and last ?
+        pdf_bins = np.diff(np.concatenate((cdf, [1+cdf2[0]])))
+        from scipy import stats
+        print 'chisquare test',
+        fac = 1.   # try when we are unsure about sample size
+        print stats.chisquare(counts*fac, counts.sum() * fac * pdf_bins) #[:-1])
 
         if options.show:
             plt.show()
