@@ -101,6 +101,9 @@ if __name__ == '__main__':
         fig.savefig(figname)
 
         res = fit(fdata, start_params)
+        #normalize parameters, rotate, scipy cdf breaks on negative kappa
+        import ex_cdf as e
+        res.params = e.normalize_params(res.params)
 
         res.model.summary_params(res.params,
                                  name='%d components' % options.n_components)
@@ -161,7 +164,7 @@ if __name__ == '__main__':
         pdf_bins = np.diff(np.concatenate((cdf, [1+cdf[0]])))
         from scipy import stats
         print 'chisquare test',
-        fac = 20.   # try when we are unsure about sample size
+        fac = 1.   # try when we are unsure about sample size
         print stats.chisquare(counts*fac, counts.sum() * fac * pdf_bins) #[:-1])
 
         if options.show:
