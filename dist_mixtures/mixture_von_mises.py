@@ -11,6 +11,23 @@ Author: Robert Cimrman (est_von_mises)
 import numpy as np
 from scipy import stats, special, optimize
 
+from statsmodels.base.model import GenericLikelihoodModel
+
+
+def _split_params(params):
+    '''split mixture parameter into components
+
+    helper function
+    split out for testing
+    '''
+    npar=2  #hard coded: 1 shape parameter plus loc per mixture
+    k_dist = (len(params) - npar) / (npar + 1) + 1  #number of distributions in mixture
+    probs = params[npar * k_dist:]
+    shapes = params[: npar * k_dist : 2]
+    locs = params[1 : npar * k_dist : 2]
+
+    return shapes, locs, probs
+
 def pdf_vn(x, b, loc):
     '''pdf of von mises distribution
 
@@ -23,6 +40,8 @@ def cdf_vn(x, b, loc):
     '''cdf of von mises distribution
 
     has fixed scale=1, otherwise same as scipy.stats.vonmises
+
+    origin of cdf (x: cdf(x)==0) is not adjusted for loc
 
     '''
     return stats.vonmises._cdf(x-loc, b)
@@ -112,7 +131,7 @@ def pdf_mix(params, x):
     '''pdf of a mixture of von mises distributions
     '''
     k_dist = (len(params) - 2) / 3 + 1  #number of distributions in mixture
-    p_params = np.concatenate((params[-k_dist+1:], [0]))
+    p_params = np.concatenate((params[2 * k_dist:], [0]))
     probs = np.exp(p_params)
     probs /= probs.sum()
     llf = 0
@@ -174,7 +193,7 @@ class GaussianKDE(gaussian_kde):
 
 
 
-from statsmodels.base.model import GenericLikelihoodModel
+
 
 class VonMisesMixture(GenericLikelihoodModel):
     '''class to estimate a finite mixture of Von Mises distributions
@@ -216,7 +235,8 @@ class VonMisesMixture(GenericLikelihoodModel):
 #        probs = np.exp(p_params)
 #        probs /= probs.sum()
 
-        probs = get_probs2(params[-k_dist+1:])
+        #probs = get_probs2(params[-k_dist+1:])
+        probs = get_probs2(params[2*k_dist:])
 
         pdf_ = np.zeros(x.shape)
         if return_comp:
@@ -236,20 +256,27 @@ class VonMisesMixture(GenericLikelihoodModel):
         '''cdf of a mixture of von mises distributions
         '''
 
+        params = np.asarray(params)
+
+
         if x is None:
             x = self.endog
+        else:
+            #x = np.atleast_1d(x)   #TODO: needed or not?
+            x = np.asarray(x)
 
         k_dist = (len(params) - 2) / 3 + 1  #number of distributions in mixture
 #        p_params = np.concatenate((params[-k_dist+1:], [0]))
 #        probs = np.exp(p_params)
 #        probs /= probs.sum()
 
-        probs = get_probs2(params[-k_dist+1:])
+        #probs = get_probs2(params[-k_dist+1:])
+        probs = get_probs2(params[2*k_dist:])
 
         #vonmises cdf can have negative values with loc outside (-pi,pi)
         #>>> stats.vonmises.cdf(-np.pi+1e-6, 180.07281913, loc=3.6730781)
         #-0.99999999999906264
-        locs = params[1:-k_dist+1:2]
+        locs = params[1:2*k_dist:2]
         kfact = locs / (2*np.pi)
         locs -= np.round(kfact) * (2*np.pi)
 
@@ -257,7 +284,11 @@ class VonMisesMixture(GenericLikelihoodModel):
         if return_comp:
             cdf_d = []
         for ii in range(k_dist):
-            cdf_i = probs[ii] * cdf_vn(x, params[ii*2], locs[ii]) #params[ii*2+1])
+            #normalize to cdf(-np.pi) = 0
+            cdf_component = (cdf_vn(x, params[ii*2], locs[ii]) -
+                             cdf_vn(-np.pi, params[ii*2], locs[ii]))
+
+            cdf_i = probs[ii] * cdf_component
             cdf_ += cdf_i
             if return_comp:
                 cdf_d.append(cdf_i)
@@ -267,13 +298,21 @@ class VonMisesMixture(GenericLikelihoodModel):
         else:
             return cdf_
 
-    def rvs_mix(self, params, size=100, ret_sizes=False):
+    def rvs_mix(self, params, size=100, ret_sizes=False, fixed_size=False,
+                shuffle=False):
         '''Random variates of the mixture distribution.
         '''
         k_dist = (len(params) - 2) / 3 + 1 #number of distributions in mixture
 
-        probs = get_probs2(params[-k_dist+1:])
-        sizes = np.ceil(probs[:k_dist] * size).astype(np.int32)
+        probs = get_probs2(params[2 * k_dist:])
+        if fixed_size:
+            sizes = np.ceil(probs[:k_dist] * size).astype(np.int32)
+            nr = sizes.sum()
+            if  nr > size:
+                sizes[-1] -= (nr - size)
+
+        sizes = np.random.multinomial(size, probs, size=1)
+        sizes = sizes[0]  #np.squeeze(sizes) #return of multinomial is 2d
 
         rvs = []
         for ii in range(k_dist):
@@ -281,6 +320,11 @@ class VonMisesMixture(GenericLikelihoodModel):
                                           loc=params[2*ii+1],
                                           size=sizes[ii]))
         rvs = np.concatenate(rvs)
+        if shuffle:
+            np.random.shuffle(rvs)
+
+        #shift into (-pi,pi)  use helper function
+        rvs = np.remainder(rvs + np.pi, 2 * np.pi) - np.pi
 
         if ret_sizes:
             return rvs, sizes
