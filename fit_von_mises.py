@@ -42,6 +42,25 @@ def transform_2pi(data):
     return out
 
 def transform_pi_deg(data, neg_shift=False):
+    '''transform radial on (-pi, pi) to axial degrees
+
+    Parameters
+    ----------
+    data : array_like
+        data in radians
+    neg_shift : bool
+        If False (default), then radians on full circle are converted to
+        degrees on half circle (axial)
+        If True, then degrees are returned for half-circle (0, 180).
+
+    Returns
+    -------
+    deg : ndarray
+        axial degrees
+
+
+    '''
+    #same as np.remainder(data * (90 / np.pi), 180) if data is in (-pi, pi)
     data = np.asarray(data)
 
     out = 90.0 * data / np.pi
@@ -50,6 +69,20 @@ def transform_pi_deg(data, neg_shift=False):
     return out
 
 def fix_range(data):
+    '''transform or wrap data into [-pi, pi]
+
+    Parameters
+    ----------
+    data : array_like
+        data in radians
+
+    Returns
+    -------
+    data2 : ndarray
+        data in radians wrapped to closed interval [-pi, pi]
+    '''
+    #almost same as np.remainder(data+np.pi, 2*np.pi) - np.pi
+    #which maps to half open interval [-pi, pi)
     data = np.asarray(data)
 
     data = data.copy()
@@ -76,6 +109,8 @@ def get_counts_from_lengths(lengths):
     return counts
 
 def fit(data, start_params):
+    '''create VonMisesMixture instance and fit to data
+    '''
     mod = VonMisesMixture(data)
     #with master of statsmodels we can use bfgs
     #because the objective function is now normalized with 1/nobs we can
@@ -148,6 +183,10 @@ def split_equal_areas(data, x0, x1):
     return 0.5 * area, xh
 
 def plot_data(data, fdata, bins, neg_shift):
+    '''create figure with plot of raw data and histogram in subplots
+
+
+    '''
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
 
     td0 = transform_pi_deg(data[:, 0], neg_shift=neg_shift)
@@ -166,6 +205,23 @@ def plot_data(data, fdata, bins, neg_shift):
     return fig
 
 def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
+    '''plot 2 histograms given by fdata and rvs
+
+    Parameters
+    ----------
+    fdata : ndarray
+        original data
+    rvs : ndarray
+        simulated data
+    sizes : iterable
+        ???
+    bins :
+        directly used by matplotlib ``hist``
+    negshift : bool
+        If False, keep range in (-90, 90).
+        If True, shift range to (0, 180).
+    '''
+
     fig = plt.figure(3)
     plt.clf()
     plt.title('original (blue, %d) vs. simulated (green, %s)'
