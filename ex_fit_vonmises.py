@@ -5,10 +5,16 @@ Created on Wed Oct 24 19:22:17 2012
 Author: Josef Perktold
 """
 
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-from fit_von_mises import *
+from fit_von_mises import (CSVLog, load_data, io, get_counts_from_lengths,
+                           transform_2pi, transform_pi_deg, fit,
+                           plot_data, draw_areas, get_area_angles,
+                           plot_rvs_comparison, fix_range
+                           )
 
 class Store(object):
     pass
@@ -18,15 +24,16 @@ if __name__ == '__main__':
     options = Store()
     #options
     #default
-    options.n_components = 1     # 2 default
+    options.n_components = 2     # 2 default
     options.params = None        # None default
     options.dir_pattern = '*'    # '*' default
     options.area_angles = False  # False default
-    options.show = False         # False default
+    options.show = True #False         # False default
 
     pattern = '*ImageJ.txt'
-    data_dir = '../analysis/test-data'
-    output_dir = '../analysis/tmp_bfgs_rsprob_sp_1_master_allbins_hist_'
+    data_dir = '../analysis/test-data/192_09'
+    #output_dir = '../analysis/tmp_bfgs_rsprob_sp_2_master_allbins_hist_'
+    output_dir = '../analysis/tmp_192'
 
     #end options
     #options.show = True
@@ -77,7 +84,7 @@ if __name__ == '__main__':
         counts = get_counts_from_lengths(data[:, 1])
         fdata = np.repeat(data[:, 0], counts)
 
-        print 'simulated counts range:', counts.min(), counts.max()
+        print 'simulated counts range:', counts.min(), counts.max(), counts.sum()
 
         ddata = np.sort(transform_pi_deg(data[:, 0], neg_shift=neg_shift))
         dd = ddata[1] - ddata[0]
@@ -146,14 +153,15 @@ if __name__ == '__main__':
             #cdf = stats.vonmises._cdf(tr(xx_cdf - res.params[1] - np.pi * (np.sign(res.params[0])==-1)), np.abs(res.params[0]))
             #looks ok, cdf > 1 or cdf < 0 to make it easier to wrap around circle
             #subtract cdf of starting point
+            from scipy import stats
             cdf = stats.vonmises.cdf((xx_cdf), res.params[0], loc=res.params[1])
         else:
             cdf = res.model.cdf_mix(res.params, xx_cdf)
         #TODO: problems, cdf > 1, bin boundaries merge 1st and last ?
-        pdf_bins = np.diff(np.concatenate((cdf, [1+cdf2[0]])))
+        pdf_bins = np.diff(np.concatenate((cdf, [1+cdf[0]])))
         from scipy import stats
         print 'chisquare test',
-        fac = 1.   # try when we are unsure about sample size
+        fac = 20.   # try when we are unsure about sample size
         print stats.chisquare(counts*fac, counts.sum() * fac * pdf_bins) #[:-1])
 
         if options.show:
