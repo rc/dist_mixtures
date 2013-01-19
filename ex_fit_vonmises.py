@@ -167,5 +167,17 @@ if __name__ == '__main__':
         fac = 1.   # try when we are unsure about sample size
         print stats.chisquare(counts*fac, counts.sum() * fac * pdf_bins) #[:-1])
 
+        #comparison with raw length distribution
+        #plot not shifted to center
+        data_raw = load_data(filenames, transform=None)
+        rad_diff = data[1,0] - data[0,0]
+        plt.figure()
+        plt.plot(data[:,0], data_raw[:,1] / data_raw[:,1].sum(),
+                 color='b', lw=2, alpha=0.7, label='data')
+        plt.plot(data[:,0], res.model.pdf_mix(res.params, data[:,0]) * rad_diff,
+                 color='r', lw=2, alpha=0.7, label='estimated')
+        plt.title('Length distribution - data and estimate')
+        plt.legend()
+
         if options.show:
             plt.show()
