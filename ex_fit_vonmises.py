@@ -193,14 +193,29 @@ if __name__ == '__main__':
         print 'resb.params ', resb.params
         print 'resb2.params', resb2.params
         #TODO: need to standardize sequence of components in params
+        print 'gof chisquare', resb.model.gof_chisquare(resb.params)
+
+        #LS is more sensitive to start_params ?
+        resbls = modb.fit_ls(start_params=res.params)
+        resbls_params = mixvn.normalize_params(resbls[0])
+        print 'resbls params ', resbls_params
 
         plt.figure()
         plt.plot(data[:,0], data_raw[:,1] / data_raw[:,1].sum(),
                  color='b', lw=2, alpha=0.7, label='data')
         plt.plot(data[:,0], resb.model.pdf_mix(resb.params, data[:,0]) * rad_diff,
                  color='r', lw=2, alpha=0.7, label='estimated')
-        plt.title('Length distribution - data and estimate')
+        plt.title('Length distribution - data and binned MLE estimate')
         plt.legend()
+
+        plt.figure()
+        plt.plot(data[:,0], data_raw[:,1] / data_raw[:,1].sum(),
+                 color='b', lw=2, alpha=0.7, label='data')
+        plt.plot(data[:,0], resb.model.pdf_mix(resbls_params, data[:,0]) * rad_diff,
+                 color='r', lw=2, alpha=0.7, label='estimated')
+        plt.title('Length distribution - data and LS estimate')
+        plt.legend()
+
 
         if options.show:
             plt.show()

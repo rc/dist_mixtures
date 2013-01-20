@@ -559,6 +559,41 @@ class VonMisesMixtureBinned(VonMisesMixture):
         pdf_bins = np.diff(cdf_bins)
         return self.endog * np.log(pdf_bins)
 
+    def pmf_bins(self, params):
+        '''probability mass function of binned data
+        '''
+
+        #normalized params, no negative kappa. needed for estimation
+        params_ = normalize_params(params)
+        cdf_bins = self.cdf_mix(params_, x=self.bins)
+        pdf_bins = np.diff(cdf_bins)
+        return pdf_bins
+
+    #add to results instance and drop params
+    def gof_chisquare(self, params, fac=1.):
+        '''chisquare goodness-of-fit test
+
+        try ``fac`` when we are unsure about sample size
+
+        '''
+
+        counts = self.endog
+        pmf_bins = self.pmf_bins(params)
+
+        return stats.chisquare(counts*fac, counts.sum() * fac * pmf_bins) #[:-1])
+
+    def fit_ls(self, start_params=None):
+        '''estimate parameters by histogram fitting
+
+        simple least squares, does not use weights
+        maybe more sensitive to starting values
+
+        '''
+        freq = self.endog / self.endog.sum()
+        func = lambda params : (freq - self.pmf_bins(params))**2
+        return optimize.leastsq(func, start_params, full_output=True)
+
+
 
 if __name__ == '__main__':
     #original example
