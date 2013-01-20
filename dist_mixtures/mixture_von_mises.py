@@ -521,6 +521,44 @@ class VonMisesMixture(GenericLikelihoodModel):
         plt.legend()
         return fig
 
+class VonMisesMixtureBinned(VonMisesMixture):
+    '''Maximum Likelihood model for binned data for Von Mises mixture
+
+    TODO: names and meaning of parameters, arguments in __init__ needs to be
+        changed.
+        No clear pattern yet for case weights in Maximum Likelihood Models
+
+    Parameters
+    ----------
+    endog : ndarray, 1-D, (nobs,)
+        weights, number of obwervation in bins
+    exog : ndarray, 1-D (nobs+1)
+        bin edges, this is stored in attribute ``bins``
+        the attribute exog will contain the bin centers
+
+
+    '''
+
+    def __init__(self, endog, exog):
+
+        self.bins = exog
+        bin_centers = 0.5 * (exog[1:] + exog[:-1])
+        super(VonMisesMixtureBinned, self).__init__(endog, bin_centers)
+
+
+    def loglikeobs(self, params, x=None):
+        '''loglikelihood of observations of a mixture of von mises distributions
+
+        based on binned data
+        assume exog contains bins, endog counts
+        problem bin-edges has one more observation
+        '''
+
+        params_ = normalize_params(params)
+        cdf_bins = self.cdf_mix(params_, x=self.bins)
+        pdf_bins = np.diff(cdf_bins)
+        return self.endog * np.log(pdf_bins)
+
 
 if __name__ == '__main__':
     #original example

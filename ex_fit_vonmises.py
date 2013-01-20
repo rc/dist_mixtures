@@ -16,6 +16,9 @@ from fit_von_mises import (CSVLog, load_data, io, get_counts_from_lengths,
                            plot_rvs_comparison, fix_range
                            )
 
+import dist_mixtures.mixture_von_mises as mixvn
+#from dist_mixtures.mixture_von_mises import VonMisesMixtureBinned
+
 class Store(object):
     pass
 
@@ -175,6 +178,26 @@ if __name__ == '__main__':
         plt.plot(data[:,0], data_raw[:,1] / data_raw[:,1].sum(),
                  color='b', lw=2, alpha=0.7, label='data')
         plt.plot(data[:,0], res.model.pdf_mix(res.params, data[:,0]) * rad_diff,
+                 color='r', lw=2, alpha=0.7, label='estimated')
+        plt.title('Length distribution - data and estimate')
+        plt.legend()
+
+        count_endog = data_raw[:, 1] / 100.
+        bins_exog = np.linspace(-np.pi, np.pi, 180+1)
+        modb = mixvn.VonMisesMixtureBinned(count_endog, bins_exog)
+        resb = modb.fit(start_params=res.params, method='bfgs')
+        resb.params = mixvn.normalize_params(resb.params)
+        resb2 = modb.fit(start_params=start_params, method='bfgs')
+        resb2.params = mixvn.normalize_params(resb2.params)
+        print 'res.params  ', res.params
+        print 'resb.params ', resb.params
+        print 'resb2.params', resb2.params
+        #TODO: need to standardize sequence of components in params
+
+        plt.figure()
+        plt.plot(data[:,0], data_raw[:,1] / data_raw[:,1].sum(),
+                 color='b', lw=2, alpha=0.7, label='data')
+        plt.plot(data[:,0], resb.model.pdf_mix(resb.params, data[:,0]) * rad_diff,
                  color='r', lw=2, alpha=0.7, label='estimated')
         plt.title('Length distribution - data and estimate')
         plt.legend()
