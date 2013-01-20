@@ -8,42 +8,11 @@ Author: Josef Perktold
 
 import numpy as np
 from scipy import stats, interpolate, integrate
-from dist_mixtures.mixture_von_mises import VonMisesMixture
+from dist_mixtures.mixture_von_mises import (VonMisesMixture,
+                                             normalize_params, shift_loc)
 
 from numpy.testing import assert_almost_equal, assert_
 
-def shift_loc(x):
-    '''shift x into interval (-pi, pi) modulo 2 pi
-    '''
-    return np.remainder(x + np.pi, 2*np.pi) - np.pi
-
-def normalize_params(params):
-    '''shift location and shape parameters
-
-    location will be in interval (-pi, pi) modulo 2 pi
-    shape parameter kappa will be non-negative
-
-    This leaves a circular distribution unchanged. Returns a copy no inplace.
-
-    Parameters
-    ----------
-    params : array_like
-       assumes parameterization of mixture distribution
-       (kappa1, loc1, kappa2, loc2, ..., logitprob1, ...)
-
-    Returns
-    -------
-    params_new : ndarray
-       same structure as params, with standardized domain
-    '''
-    n_components = (len(params) + 1) // 3
-    params_new = np.array(params, copy=True)
-    #concentration kappa
-    params_new[:n_components*2:2] = np.abs(params_new[:n_components*2:2])
-    #loc
-    params_new[1:n_components*2:2] = shift_loc(params_new[1:n_components*2:2]
-                        - np.pi * (np.sign(params[:n_components*2:2])==-1))
-    return params_new
 
 p = [-4, -2.5*np.pi, -4, 1*np.pi, 5, 3.5*np.pi, 0, 0]
 p_transformed = [4, 0.5*np.pi, 4, 0, 5, -0.5*np.pi, 0, 0]
