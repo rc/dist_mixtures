@@ -594,7 +594,8 @@ class VonMisesMixtureBinned(VonMisesMixture):
         counts = self.endog
         pmf_bins = self.pmf_bins(params)
 
-        return stats.chisquare(counts*fac, counts.sum() * fac * pmf_bins) #[:-1])
+        return stats.chisquare(counts*fac, counts.sum() * fac * pmf_bins,
+                               ddof=len(params)) #[:-1])
 
     def fit_ls(self, start_params=None):
         '''estimate parameters by histogram fitting

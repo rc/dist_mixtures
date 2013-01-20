@@ -213,8 +213,8 @@ def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
         original data
     rvs : ndarray
         simulated data
-    sizes : iterable
-        ???
+    sizes : list, iterable
+        list of the numbers of observations of mixture components
     bins :
         directly used by matplotlib ``hist``
     negshift : bool
