@@ -330,7 +330,8 @@ def main():
                                  name='%d components' % options.n_components)
 
         xtr = lambda x: transform_pi_deg(x, neg_shift=neg_shift)
-        fig = res.model.plot_dist(res.params, xtransform=xtr)
+        rbins = transform_2pi(bins) - np.pi
+        fig = res.model.plot_dist(res.params, xtransform=xtr, bins=rbins)
         fig.axes[0].set_title('Estimated distribution')
 
         figname = os.path.join(output_dir, dir_base + '-fit-%d.png'
