@@ -13,6 +13,7 @@ from scipy import stats, special, optimize
 
 from statsmodels.base.model import GenericLikelihoodModel
 
+from dist_mixtures.base import Struct
 
 def _split_params(params):
     '''split mixture parameter into components
@@ -165,7 +166,7 @@ def fit(xx):
 
 
 from scipy.stats.kde import gaussian_kde
-class GaussianKDE(gaussian_kde):
+class GaussianKDE(gaussian_kde, Struct):
     '''A subclass of gaussian_kde that allows flexible choice of bandwidth
 
     Is not necessary with scipy >= 0.10.
@@ -195,7 +196,7 @@ class GaussianKDE(gaussian_kde):
 
 
 
-class VonMisesMixture(GenericLikelihoodModel):
+class VonMisesMixture(GenericLikelihoodModel, Struct):
     '''class to estimate a finite mixture of Von Mises distributions
 
     fit and results are inherited from GenericLikelihoodModel
