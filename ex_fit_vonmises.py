@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from fit_von_mises import (CSVLog, load_data, io, get_counts_from_lengths,
+                           spread_by_counts,
                            transform_2pi, transform_pi_deg, fit,
                            plot_data, draw_areas, get_area_angles,
                            plot_rvs_comparison, fix_range
@@ -82,7 +83,7 @@ if __name__ == '__main__':
 
         # Simulate the "random process" the histogram was done from.
         counts = get_counts_from_lengths(data[:, 1])
-        fdata = np.repeat(data[:, 0], counts)
+        fdata = spread_by_counts(data[:, 0], counts)
 
         print 'simulated counts range:', counts.min(), counts.max(), counts.sum()
 
@@ -148,7 +149,7 @@ if __name__ == '__main__':
         #goodness-of-fit chisquare test
 
         #TODO: we know bins of fdata
-        uni_fdata = np.unique(fdata)
+        uni_fdata = data[:, 0]
         xx_cdf = uni_fdata + (2 * np.pi / 180) / 2
         #TODO: bug: cdf_mix doesn't work if n_components=1
         tr = lambda x: np.remainder(x + np.pi, 2*np.pi) - np.pi

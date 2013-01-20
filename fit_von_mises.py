@@ -306,7 +306,7 @@ def main():
 
         # Simulate the "random process" the histogram was done from.
         counts = get_counts_from_lengths(data[:, 1])
-        fdata = np.repeat(data[:, 0], counts)
+        fdata = spread_by_counts(data[:, 0], counts)
 
         print 'simulated counts range:', counts.min(), counts.max()
 
