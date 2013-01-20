@@ -11,7 +11,8 @@ Author: Robert Cimrman (est_von_mises)
 import numpy as np
 from scipy import stats, special, optimize
 
-from statsmodels.base.model import GenericLikelihoodModel
+from statsmodels.base.model import (GenericLikelihoodModel,
+                                    GenericLikelihoodModelResults)
 
 
 def _split_params(params):
@@ -569,6 +570,19 @@ class VonMisesMixtureBinned(VonMisesMixture):
         pdf_bins = np.diff(cdf_bins)
         return pdf_bins
 
+    def fit(self, start_params=None, method='bfgs', maxiter=500, full_output=1,
+            disp=1, callback=None, retall=0, **kwargs):
+        result0 = super(VonMisesMixtureBinned, self).fit(
+                    start_params=start_params, method=method, maxiter=maxiter,
+                    full_output=full_output, disp=disp, callback=callback,
+                    retall=retall, **kwargs)
+
+        #this is a bit different from the way results are updated in discrete
+        #TODO: check this
+        result = MixtureResult(self, result0)
+        #result.__dict__.update(result0.__dict__)
+        return result
+
     #add to results instance and drop params
     def gof_chisquare(self, params, fac=1.):
         '''chisquare goodness-of-fit test
@@ -593,6 +607,16 @@ class VonMisesMixtureBinned(VonMisesMixture):
         func = lambda params : (freq - self.pmf_bins(params))**2
         return optimize.leastsq(func, start_params, full_output=True)
 
+class MixtureResult(GenericLikelihoodModelResults):
+    '''incomplete trial version for results class
+
+    mainly a stub,
+    Caution: not all inherited methods will make sense in the binned model
+
+    '''
+
+    def gof_chisquare(self, fac=1.):
+        return self.model.gof_chisquare(self.params, fac=fac)
 
 
 if __name__ == '__main__':
