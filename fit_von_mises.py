@@ -75,6 +75,31 @@ def get_counts_from_lengths(lengths):
 
     return counts
 
+def spread_by_counts(data, counts, trivial=False):
+    """
+    Spread items in `data` according to `counts`.
+
+    If `trivial` is True, only repeat n-th item of data `counts[n]`
+    times. Otherwise include between `data[n]` and `data[n + 1]` a linear
+    sequence with `counts[n] + 1` items from `data[n]` to `data[n + 1]` without
+    the last item.
+    """
+    if trivial:
+        out = np.repeat(data, counts)
+
+    else:
+        dd = data[-1] - data[-2]
+        data = np.r_[data, data[-1] + dd]
+
+        out = np.empty(counts.sum(), dtype=data.dtype)
+        ii = 0
+        for ic, count in enumerate(counts):
+            out[ii:ii + count] = np.linspace(data[ic], data[ic+1],
+                                             count + 1)[:-1]
+            ii += count
+
+    return out
+
 def fit(data, start_params):
     mod = VonMisesMixture(data)
     #with master of statsmodels we can use bfgs
