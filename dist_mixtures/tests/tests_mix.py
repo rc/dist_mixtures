@@ -30,6 +30,25 @@ def test_split_params():
 
         assert_equal(len(pr), k_dist - 1)
 
+def test_normalize():
+    np.random.seed(123)
+    npar = 2
+    k = 3
+    x = np.linspace(-k*np.pi, k*np.pi, 21)
+    vnm = mixvn.VonMisesMixture(x)
+    for k_dist in range(1, 5):
+        nparams = npar * k_dist + k_dist - 1
+        for _ in range(10):
+            params = np.random.uniform(-5, 5, size=nparams)
+            params[npar * k_dist:] /= 10
+            pdf1 = vnm.pdf_mix(params)
+            params2 = mixvn.normalize_params(params)
+            #most params are changed
+            #print np.max(np.abs(params - params2)) > 0.001,
+            pdf2 = vnm.pdf_mix(params2)
+            assert_almost_equal(pdf2, pdf1, decimal=14)
+
+
 def test_mix1():
     np.random.seed(987789)
     nobs = 10
