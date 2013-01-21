@@ -236,6 +236,8 @@ help = {
     ' mu should be given in degrees in [-90, 90[.',
     'dir_pattern' :
     'pattern that subdrectories should match [default: %default]',
+    'spread_data' :
+    'spread raw data using their counts instead of just repeating them',
     'area_angles' :
     'compute and draw angles of two systems of fibres determined by'
     ' equal histogram areas',
@@ -254,6 +256,9 @@ def main():
     parser.add_option('-d', '--dir-pattern', metavar='pattern',
                       action='store', dest='dir_pattern',
                       default='*', help=help['dir_pattern'])
+    parser.add_option('', '--spread-data',
+                      action='store_true', dest='spread_data',
+                      default=False, help=help['spread_data'])
     parser.add_option('-a', '--area-angles',
                       action='store_true', dest='area_angles',
                       default=False, help=help['area_angles'])
@@ -306,7 +311,8 @@ def main():
 
         # Simulate the "random process" the histogram was done from.
         counts = get_counts_from_lengths(data[:, 1])
-        fdata = spread_by_counts(data[:, 0], counts)
+        fdata = spread_by_counts(data[:, 0], counts,
+                                 trivial=options.spread_data == False)
 
         print 'simulated counts range:', counts.min(), counts.max()
 
