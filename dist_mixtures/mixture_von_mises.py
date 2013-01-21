@@ -22,7 +22,8 @@ def _split_params(params):
     split out for testing
     '''
     npar=2  #hard coded: 1 shape parameter plus loc per mixture
-    k_dist = (len(params) - npar) / (npar + 1) + 1  #number of distributions in mixture
+    #number of distributions in mixture:
+    k_dist = (len(params) - npar) / (npar + 1) + 1
     probs = params[npar * k_dist:]
     shapes = params[: npar * k_dist : 2]
     locs = params[1 : npar * k_dist : 2]
@@ -82,33 +83,28 @@ def cdf_vn(x, b, loc):
     return stats.vonmises._cdf(x-loc, b)
 
 def est_von_mises(data, method='mle'):
+    '''estimate kappa and mu of Von Mises distribution
+    '''
     #Author: Robert Cimrman, changes Josef Perktold
     from scipy.special import i0, i1
-    from scipy.optimize import newton as nls
 
     nobs = data.shape[0]
 
     zn = np.exp(data * 1j)
-    #avg_z = zn.sum() / data.shape[0]
     avg_z = zn.mean()
     loc = np.angle(avg_z)
 
     z2 = (avg_z * avg_z.conjugate()).real
-    #z2 = (avg_z * (zn.conjugate().mean())).real
 
     z = np.sqrt(z2)
     def fun_mle(x):
-        #FIX: square or square-root(z2) was missing
-        #val = z2 - ((i1(x) / i0(x)))**2 #
         val = z - i1(x) / i0(x)
-        #print val
         return val
 
     nobs_inv = 1. / nobs
     nobs_ratio = (nobs - 1.) / nobs
     def fun_correction(x):
         val = nobs_ratio * (z - nobs_inv) - i1(x) / i0(x)
-        #print val
         return val
 
     if method == 'mle':
@@ -116,7 +112,7 @@ def est_von_mises(data, method='mle'):
     else:
         fun = fun_correction
 
-    kappa = nls(fun, 1.0)
+    kappa = optimize.newton(fun, 1.0)
 
     return kappa, loc
 
@@ -137,7 +133,7 @@ def get_probs(params):
 
     '''
     k_dist = (len(params) - 2) / 3 + 1
-    p_params = np.concatenate((params[-k_dist+1:], [0]))
+    p_params = np.concatenate((params[2 * k_dist :], [0]))
     probs = np.exp(p_params)
     probs /= probs.sum()
     return probs
@@ -179,7 +175,7 @@ def loglike(params, x):
     '''loglikelihood of a mixture of von mises distributions
     '''
     k_dist = (len(params) - 2) / 3 + 1  #number of distributions in mixture
-    p_params = np.concatenate((params[-k_dist+1:], [0]))
+    p_params = np.concatenate((params[2 * k_dist :], [0]))
     probs = np.exp(p_params)
     probs /= probs.sum()
     llf = 0
@@ -189,10 +185,10 @@ def loglike(params, x):
     return -np.log(llf).sum()
 
 
-def fit(xx):
+def fit(xx, params0):
     '''call to fmin to maximize loglikelihood
 
-    trial version: incomplete definition of variables
+    trial version
     '''
     res = optimize.fmin(loglike, params0, args=(xx,), maxfun=5000,
                                full_output=1)
@@ -266,11 +262,6 @@ class VonMisesMixture(GenericLikelihoodModel):
             x = self.endog
 
         k_dist = (len(params) - 2) / 3 + 1  #number of distributions in mixture
-#        p_params = np.concatenate((params[-k_dist+1:], [0]))
-#        probs = np.exp(p_params)
-#        probs /= probs.sum()
-
-        #probs = get_probs2(params[-k_dist+1:])
         probs = get_probs2(params[2*k_dist:])
 
         pdf_ = np.zeros(x.shape)
@@ -301,11 +292,6 @@ class VonMisesMixture(GenericLikelihoodModel):
             x = np.asarray(x)
 
         k_dist = (len(params) - 2) / 3 + 1  #number of distributions in mixture
-#        p_params = np.concatenate((params[-k_dist+1:], [0]))
-#        probs = np.exp(p_params)
-#        probs /= probs.sum()
-
-        #probs = get_probs2(params[-k_dist+1:])
         probs = get_probs2(params[2*k_dist:])
 
         #vonmises cdf can have negative values with loc outside (-pi,pi)
@@ -347,7 +333,7 @@ class VonMisesMixture(GenericLikelihoodModel):
                 sizes[-1] -= (nr - size)
 
         sizes = np.random.multinomial(size, probs, size=1)
-        sizes = sizes[0]  #np.squeeze(sizes) #return of multinomial is 2d
+        sizes = sizes[0]  #return of multinomial is 2d, need 1d
 
         rvs = []
         for ii in range(k_dist):
@@ -363,7 +349,6 @@ class VonMisesMixture(GenericLikelihoodModel):
 
         if ret_sizes:
             return rvs, sizes
-
         else:
             return rvs
 
@@ -570,6 +555,7 @@ class VonMisesMixtureBinned(VonMisesMixture):
         pdf_bins = np.diff(cdf_bins)
         return pdf_bins
 
+
     def fit(self, start_params=None, method='bfgs', maxiter=500, full_output=1,
             disp=1, callback=None, retall=0, **kwargs):
         result0 = super(VonMisesMixtureBinned, self).fit(
@@ -583,7 +569,8 @@ class VonMisesMixtureBinned(VonMisesMixture):
         #result.__dict__.update(result0.__dict__)
         return result
 
-    #add to results instance and drop params
+
+    #added to results instance without params, calls this
     def gof_chisquare(self, params, fac=1.):
         '''chisquare goodness-of-fit test
 
