@@ -54,7 +54,9 @@ def normalize_params(params):
     params_new : ndarray
        same structure as params, with standardized domain
     '''
-    n_components = (len(params) + 1) // 3
+    n_components, rem = divmod(len(params) + 1, 3)
+    if rem != 0:
+        raise ValueError('wrong number of parameters for mixture')
     params_new = np.array(params, copy=True)
     #concentration kappa
     params_new[:n_components*2:2] = np.abs(params_new[:n_components*2:2])
@@ -591,9 +593,20 @@ class VonMisesMixtureBinned(VonMisesMixture):
         maybe more sensitive to starting values
 
         '''
-        freq = self.endog / self.endog.sum()
-        func = lambda params : (freq - self.pmf_bins(params))**2
-        return optimize.leastsq(func, start_params, full_output=True)
+        #Warning: endog can be integers
+        freq = self.endog * 1. / self.endog.sum()
+        func = lambda params : 100 * (freq - self.pmf_bins(params))**2
+        res = optimize.leastsq(func, start_params, full_output=True,
+                                #maxfev=5000
+                                #epsfcn=1e-3, factor=0.1
+                                )
+
+        #TODO: warnings.warn ?
+        if res[-1] not in [1]:
+            print "Warning: leastsq not converged with 1"
+            print res[-2]
+
+        return res
 
 
 class MixtureResult(GenericLikelihoodModelResults):

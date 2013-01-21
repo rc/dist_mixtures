@@ -58,7 +58,7 @@ def test_vonmisesmixture():
     mod2 = mixvn.VonMisesMixture(np.random.uniform(-np.pi, np.pi, size=10))
     params = [2., -0.75 * np.pi, 4., np.pi/2, 0.4]
     nobs = 50000
-    rvs = mod2.rvs_mix(params, size=nobs)
+    rvs = mod2.rvs_mix(params, size=nobs, shuffle=True)
     assert_equal(len(rvs), nobs)
 
     #check withing bounds
@@ -128,6 +128,51 @@ def test_vonmisesmixture():
     cvn3 = mixvn.cdf_vn(bins - 2 * np.pi, params[0], params[1])
     assert_almost_equal(cvn3 + 1, cvn, decimal=13)
     assert_almost_equal(pvn, psp, decimal=13)
+
+    #test fit
+    mod3 = mixvn.VonMisesMixture(rvs[:2000])
+    #good starting values
+    res3 = mod3.fit(start_params=np.array(params)*1.1)
+    res3.params = mixvn.normalize_params(res3.params)
+    assert_almost_equal(res3.params, params, decimal=1)
+
+    #simple starting values, refit same model instance
+    res3 = mod3.fit(start_params=0.5*np.ones(len(params)))
+    res3.params = mixvn.normalize_params(res3.params)
+    assert_almost_equal(res3.params, params, decimal=1)
+
+    ##fit is not much better with full sample (but slower)
+    #mod4 = mixvn.VonMisesMixture(rvs)
+    #res4 = mod4.fit(start_params=0.5*np.ones(len(params)))
+    #res4.params = mixvn.normalize_params(res4.params)
+    #assert_almost_equal(res4.params, params, decimal=1)
+
+    #fit with binned data, full sample, 180 bins on (-pi, pi)
+    mod5 = mixvn.VonMisesMixtureBinned(count, bins)
+    #good starting values
+    res5 = mod5.fit(start_params=np.array(params)*1.1)
+    res5.params = mixvn.normalize_params(res5.params)
+    assert_almost_equal(res5.params, params, decimal=1)
+    assert_almost_equal(res5.params, res3.params, decimal=1)
+
+    #LSfit with binned data, full sample, 180 bins on (-pi, pi)
+    #mod5 = mixvn.VonMisesMixtureBinned(count.astype(float), bins)
+
+    #good starting values
+    res6 = mod5.fit_ls(start_params=np.array(params)*1.1)
+    res6_params = mixvn.normalize_params(res6[0])
+    assert_almost_equal(res6_params, params, decimal=1)
+    assert_almost_equal(res6_params, res5.params, decimal=2)
+
+    #simple starting values
+    start_params=0.5*np.ones(len(params))
+    start_params[-1] = 0.05
+    #TODO: optimize.leastsq can fail with maxfev, scipy cdf with ZeroDivision
+    start_params = [-2.5, 4, 0.1, 4, 0.1]
+    res6a = mod5.fit_ls(start_params=start_params)
+    res6a_params = mixvn.normalize_params(res6a[0])
+    assert_almost_equal(res6a_params, params, decimal=1)
+    assert_almost_equal(res6_params, res6_params, decimal=4)
 
 
 if __name__ == '__main__':
