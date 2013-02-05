@@ -255,7 +255,18 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
     statsmodels.base.model.GenericLikelihoodResults
 
     '''
+    def fit(self, start_params=None, method='bfgs', maxiter=500, full_output=1,
+            disp=1, callback=None, retall=0, **kwargs):
+        """
+        Call GenericLikelihoodModel.fit() and normalize result parameters.
+        """
+        result = super(VonMisesMixture, self).fit(
+            start_params=start_params, method=method, maxiter=maxiter,
+            full_output=full_output, disp=disp, callback=callback,
+            retall=retall, **kwargs)
+        result.params = normalize_params(result.params)
 
+        return result
 
     def pdf_mix(self, params, x=None, return_comp=False):
         '''pdf of a mixture of von mises distributions
@@ -623,4 +634,3 @@ class MixtureResult(GenericLikelihoodModelResults):
 
     def gof_chisquare(self, fac=1.):
         return self.model.gof_chisquare(self.params, fac=fac)
-
