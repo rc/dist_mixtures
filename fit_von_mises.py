@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from dist_mixtures.mixture_von_mises import VonMisesMixture
-import ioutils as io
-from logs import CSVLog
+import analyses.ioutils as io
+from analyses.logs import CSVLog
 
 usage = '%prog [options] pattern data_dir output_dir\n' + __doc__.rstrip()
 
