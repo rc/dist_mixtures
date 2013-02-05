@@ -11,127 +11,12 @@ import matplotlib.pyplot as plt
 
 from dist_mixtures.mixture_von_mises import VonMisesMixture
 import analyses.ioutils as io
+import analyses.transforms as tr
+import analyses.plots as pl
 from analyses.logs import CSVLog
+from analyses.area_angles import get_area_angles
 
 usage = '%prog [options] pattern data_dir output_dir\n' + __doc__.rstrip()
-
-def load_data(filenames, transform=None):
-    if transform is None:
-        transform = lambda x: x
-
-    datas = []
-    for filename in filenames:
-        data = np.genfromtxt(filename)
-        data[:, 0] = transform(data[:, 0])
-        datas.append(data)
-
-    datas = np.array(datas)
-
-    merged_data = datas[0]
-    for dd in datas[1:]:
-        if not (dd[:, 0] == merged_data[:, 0]).all():
-            raise ValueError('x axes do not match in %s' % filenames)
-        merged_data[:, 1] += dd[:, 1]
-
-    return merged_data
-
-def transform_2pi(data):
-    data = np.asarray(data)
-
-    out = 2 * data * np.pi / 180.0
-    return out
-
-def transform_pi_deg(data, neg_shift=False):
-    '''transform radial on (-pi, pi) to axial degrees
-
-    Parameters
-    ----------
-    data : array_like
-        data in radians
-    neg_shift : bool
-        If False (default), then radians on full circle are converted to
-        degrees on half circle (axial)
-        If True, then degrees are returned for half-circle (0, 180).
-
-    Returns
-    -------
-    deg : ndarray
-        axial degrees
-
-
-    '''
-    #same as np.remainder(data * (90 / np.pi), 180) if data is in (-pi, pi)
-    data = np.asarray(data)
-
-    out = 90.0 * data / np.pi
-    if neg_shift:
-        out = np.where(out >= 0.0, out, out + 180.0)
-    return out
-
-def fix_range(data):
-    '''transform or wrap data into [-pi, pi]
-
-    Parameters
-    ----------
-    data : array_like
-        data in radians
-
-    Returns
-    -------
-    data2 : ndarray
-        data in radians wrapped to closed interval [-pi, pi]
-    '''
-    #almost same as np.remainder(data+np.pi, 2*np.pi) - np.pi
-    #which maps to half open interval [-pi, pi)
-    data = np.asarray(data)
-
-    data = data.copy()
-    while 1:
-        ii = np.where(data < -np.pi)[0]
-        data[ii] += 2 * np.pi
-        if not len(ii): break
-    while 1:
-        ii = np.where(data >  np.pi)[0]
-        data[ii] -= 2 * np.pi
-        if not len(ii): break
-
-    return data
-
-def get_counts_from_lengths(lengths):
-    """
-    Get simulated counts corresponding to lengths.
-    """
-    lengths = np.asarray(lengths)
-
-    lo = lengths.min()
-    counts = ((10.0 / lo) * lengths).astype(np.int32)
-
-    return counts
-
-def spread_by_counts(data, counts, trivial=False):
-    """
-    Spread items in `data` according to `counts`.
-
-    If `trivial` is True, only repeat n-th item of data `counts[n]`
-    times. Otherwise include between `data[n]` and `data[n + 1]` a linear
-    sequence with `counts[n] + 1` items from `data[n]` to `data[n + 1]` without
-    the last item.
-    """
-    if trivial:
-        out = np.repeat(data, counts)
-
-    else:
-        dd = data[-1] - data[-2]
-        data = np.r_[data, data[-1] + dd]
-
-        out = np.empty(counts.sum(), dtype=data.dtype)
-        ii = 0
-        for ic, count in enumerate(counts):
-            out[ii:ii + count] = np.linspace(data[ic], data[ic+1],
-                                             count + 1)[:-1]
-            ii += count
-
-    return out
 
 def fit(data, start_params):
     '''create VonMisesMixture instance and fit to data
@@ -146,141 +31,6 @@ def fit(data, start_params):
                   gtol=1e-9) #False)
 
     return res
-
-def get_area_angles(data, neg_shift=False):
-    aux = transform_pi_deg(data[:, 0], neg_shift=neg_shift)
-    ip = np.argsort(aux)
-    aux = aux[ip]
-    ddd = np.c_[aux[:, None], data[ip, 1:]]
-
-    # Mirror the first data point.
-    dx = aux[1] - aux[0]
-    ddd = np.r_[ddd, [[ddd[-1, 0] + dx, ddd[0, 1]]]]
-
-    xmin, xmax = -1000, 1000
-    arh, xm = split_equal_areas(ddd, xmin, xmax)
-    arh1, x0 = split_equal_areas(ddd, xmin, xm)
-    arh2, x1 = split_equal_areas(ddd, xm, xmax)
-
-    print x0, xm, x1
-    print arh, arh1, arh2, arh1 - arh2, arh - (arh1 + arh2)
-
-    return x0, xm, x1, arh1, arh2
-
-def split_equal_areas(data, x0, x1):
-    """
-    Split histogram-like `data` into two parts with equal areas between `x0`
-    and `x1`.
-    """
-    x, y = data[:, 0].copy(), data[:, 1]
-    n_data = data.shape[0]
-
-    dx = x[1] - x[0]
-
-    xs = x - 0.5 * dx
-
-    i0 = np.searchsorted(xs, x0)
-    if i0 == 0:
-        sub0 = 0.0
-        i0 = 1
-
-    else:
-        sub0 = (x0 - xs[i0 - 1]) * y[i0 - 1]
-
-    i1 = np.searchsorted(xs, x1)
-    if i1 == n_data:
-        sub1 = 0.0
-
-    else:
-        sub1 = (xs[i1] - x1) * y[i1 - 1]
-
-    yy = y[i0 - 1:i1] * dx
-    area = np.sum(yy) - sub0 - sub1
-
-    ca = np.cumsum(yy) - sub0
-    ih = np.searchsorted(ca, 0.5 * area)
-
-    da = ca[ih] - 0.5 * area
-    dxh = da / y[i0 - 1 + ih]
-
-    xh = xs[i0 + ih] - dxh
-
-    return 0.5 * area, xh
-
-def plot_data(data, fdata, bins, neg_shift):
-    '''create figure with plot of raw data and histogram in subplots
-
-
-    '''
-    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
-
-    td0 = transform_pi_deg(data[:, 0], neg_shift=neg_shift)
-    ip = np.argsort(td0)
-    xmin, xmax = (0, 180) if neg_shift else (-90, 90)
-
-    ax1.plot(td0[ip], data[ip, 1])
-    ax1.set_title('raw data')
-    ax1.set_xlim([xmin, xmax])
-
-    ax2.hist(transform_pi_deg(fdata, neg_shift=neg_shift),
-             bins=bins, alpha=0.5)
-    ax2.set_title('raw data histogram (counts)')
-    ax2.set_xlim([xmin, xmax])
-
-    return fig
-
-def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
-    '''plot 2 histograms given by fdata and rvs
-
-    Parameters
-    ----------
-    fdata : ndarray
-        original data
-    rvs : ndarray
-        simulated data
-    sizes : list, iterable
-        list of the numbers of observations of mixture components
-    bins :
-        directly used by matplotlib ``hist``
-    negshift : bool
-        If False, keep range in (-90, 90).
-        If True, shift range to (0, 180).
-    '''
-
-    fig = plt.figure(3)
-    plt.clf()
-    plt.title('original (blue, %d) vs. simulated (green, %s)'
-              % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)))
-    plt.hist(transform_pi_deg(fdata, neg_shift=neg_shift),
-             bins=bins, alpha=0.5)
-    plt.hist(transform_pi_deg(rvs, neg_shift=neg_shift),
-             bins=bins, alpha=0.5)
-
-    xmin, xmax = (0, 180) if neg_shift else (-90, 90)
-    plt.axis(xmin=xmin, xmax=xmax)
-
-    return fig
-
-def draw_areas(ax, x0, xm, x1, arh1, arh2):
-    from matplotlib.patches import Rectangle
-
-    w = xm - x0
-    h0 = arh1 / w
-    rect = Rectangle((x0, 0), w, h0, color='gray', alpha=0.3)
-    ax.add_patch(rect)
-    xh = 0.5 * (x0 + xm)
-    ax.vlines(xh, 0, h0)
-    ax.text(xh, 0.25 * h0, '%+.2f' % (xh - xm))
-
-    w = x1 - xm
-    h1 = arh2 / w
-    rect = Rectangle((xm, 0), w, h1, color='gray', alpha=0.3)
-    ax.add_patch(rect)
-    xh = 0.5 * (xm + x1)
-    ax.vlines(xh, 0, h1)
-    ax.text(xh, 0.75 * h1, '%+.2f' % (xh - xm))
-
-    ax.text(xm, 0.25 * (h0 + h1), '%.2f' % xm)
 
 help = {
     'n_components' :
@@ -338,7 +88,7 @@ def main():
     else:
         aux = np.array([float(ii) for ii in options.params.split(',')])
         start_params[:n2:2] = aux[1::2] # kappa.
-        start_params[1:n2:2] = transform_2pi(aux[0::2]) # mu.
+        start_params[1:n2:2] = tr.transform_2pi(aux[0::2]) # mu.
 
     print 'starting parameters:', start_params
 
@@ -361,28 +111,28 @@ def main():
         print '*****'
         print 'directory base:',  dir_base
 
-        data = load_data(filenames, transform=transform_2pi)
+        data = io.load_data(filenames, transform=tr.transform_2pi)
 
         print 'data range:', data[:, 1].min(), data[:, 1].max()
 
         # Simulate the "random process" the histogram was done from.
-        counts = get_counts_from_lengths(data[:, 1])
-        fdata = spread_by_counts(data[:, 0], counts,
-                                 trivial=options.spread_data == False)
+        counts = tr.get_counts_from_lengths(data[:, 1])
+        fdata = tr.spread_by_counts(data[:, 0], counts,
+                                    trivial=options.spread_data == False)
 
         print 'simulated counts range:', counts.min(), counts.max()
 
-        ddata = np.sort(transform_pi_deg(data[:, 0], neg_shift=neg_shift))
+        ddata = np.sort(tr.transform_pi_deg(data[:, 0], neg_shift=neg_shift))
         dd = ddata[1] - ddata[0]
         all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
         bins = all_bins[::4]
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
-        fig = plot_data(data, fdata, bins, neg_shift=neg_shift)
+        fig = pl.plot_data(data, fdata, bins, neg_shift=neg_shift)
 
         if options.area_angles:
-            draw_areas(fig.axes[0],
-                       *get_area_angles(data, neg_shift=neg_shift))
+            pl.draw_areas(fig.axes[0],
+                          *get_area_angles(data, neg_shift=neg_shift))
 
         fig.savefig(figname)
 
@@ -391,8 +141,8 @@ def main():
         res.model.summary_params(res.params,
                                  name='%d components' % options.n_components)
 
-        xtr = lambda x: transform_pi_deg(x, neg_shift=neg_shift)
-        rbins = transform_2pi(bins) - np.pi
+        xtr = lambda x: tr.transform_pi_deg(x, neg_shift=neg_shift)
+        rbins = tr.transform_2pi(bins) - np.pi
         fig = res.model.plot_dist(res.params, xtransform=xtr, bins=rbins)
         fig.axes[0].set_title('Estimated distribution')
 
@@ -407,17 +157,17 @@ def main():
             pass
 
         else:
-            rvs = fix_range(rvs)
+            rvs = tr.fix_range(rvs)
 
             figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
                                    % options.n_components)
-            fig = plot_rvs_comparison(fdata, rvs, sizes, bins,
-                                      neg_shift=neg_shift)
+            fig = pl.plot_rvs_comparison(fdata, rvs, sizes, bins,
+                                         neg_shift=neg_shift)
             fig.savefig(figname)
 
         sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
-        sparams[:, 0] = transform_pi_deg(fix_range(sparams[:, 0]),
-                                         neg_shift=neg_shift)
+        sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),
+                                            neg_shift=neg_shift)
         flags = [''] * 2
         if not (sparams[:, 1] > 0.0).all():
             flags[0] = '*'
