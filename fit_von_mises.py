@@ -9,28 +9,14 @@ from optparse import OptionParser
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dist_mixtures.mixture_von_mises import VonMisesMixture
 import analyses.ioutils as io
 import analyses.transforms as tr
 import analyses.plots as pl
 from analyses.logs import CSVLog
 from analyses.area_angles import get_area_angles
+from analyses.fit_mixture import get_start_params, fit
 
 usage = '%prog [options] pattern data_dir output_dir\n' + __doc__.rstrip()
-
-def fit(data, start_params):
-    '''create VonMisesMixture instance and fit to data
-    '''
-    mod = VonMisesMixture(data)
-    #with master of statsmodels we can use bfgs
-    #because the objective function is now normalized with 1/nobs we can
-    #increase the gradient tolerance gtol
-    #res = mod.fit(start_params=start_params, method='nm', disp=True)
-    #res = mod.fit(start_params=res.params, method='bfgs', disp=True) #False)
-    res = mod.fit(start_params=start_params, method='bfgs', disp=True,
-                  gtol=1e-9) #False)
-
-    return res
 
 help = {
     'n_components' :
@@ -51,7 +37,7 @@ help = {
     'show the figures',
 }
 
-def main():
+def get_options_parser():
     parser = OptionParser(usage=usage, version='%prog')
     parser.add_option('-n', '--n-components', type=int, metavar='positive_int',
                       action='store', dest='n_components',
@@ -71,6 +57,11 @@ def main():
     parser.add_option('-s', '--show',
                       action='store_true', dest='show',
                       default=False, help=help['show'])
+
+    return parser
+
+def main():
+    parser = get_options_parser()
     options, args = parser.parse_args()
 
     if len(args) == 3:
@@ -79,17 +70,7 @@ def main():
         parser.print_help()
         return
 
-    start_params = np.zeros(options.n_components * 3 - 1)
-    n2 = 2 * options.n_components
-    if options.params is None:
-        # Zeros for mu, twos for kappa.
-        start_params[:n2:2] = 2.0
-
-    else:
-        aux = np.array([float(ii) for ii in options.params.split(',')])
-        start_params[:n2:2] = aux[1::2] # kappa.
-        start_params[1:n2:2] = tr.transform_2pi(aux[0::2]) # mu.
-
+    start_params = get_start_params(options.n_components, options.params)
     print 'starting parameters:', start_params
 
     io.ensure_path(output_dir)
@@ -104,10 +85,7 @@ def main():
                                dir_pattern=options.dir_pattern,
                                group_last_level=True)
     for filenames in get_data:
-        aux = filenames[0].split(os.path.sep)
-        dir_base = aux[-2] if len(aux) > 1 else ''
-        base_names = [os.path.basename(ii) for ii in filenames]
-
+        dir_base, base_names = io.split_dir_base(filenames)
         print '*****'
         print 'directory base:',  dir_base
 

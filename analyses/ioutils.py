@@ -37,6 +37,24 @@ def locate_files(pattern, root_dir=os.curdir, dir_pattern=None,
             for filename in fnmatch.filter(filenames, pattern):
                 yield os.path.join(dirpath, filename)
 
+def split_dir_base(filenames):
+    """
+    Split filenames to the base directory name (the directory containing the
+    files) and the actual filenames..
+
+    Returns
+    -------
+    dir_base : str
+        The base directory name.
+    base_names : list of str
+        The file names.
+    """
+    aux = filenames[0].split(os.path.sep)
+    dir_base = aux[-2] if len(aux) > 1 else ''
+    base_names = [os.path.basename(ii) for ii in filenames]
+
+    return dir_base, base_names
+
 def load_data(filenames, transform=None):
     if transform is None:
         transform = lambda x: x
