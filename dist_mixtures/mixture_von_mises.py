@@ -14,6 +14,7 @@ from scipy import stats, special, optimize
 from statsmodels.base.model import (GenericLikelihoodModel,
                                     GenericLikelihoodModelResults)
 
+from dist_mixtures.base import Struct
 
 def _split_params(params):
     '''split mixture parameter into components
@@ -198,7 +199,7 @@ def fit(xx, params0):
 
 
 from scipy.stats.kde import gaussian_kde
-class GaussianKDE(gaussian_kde):
+class GaussianKDE(gaussian_kde, Struct):
     '''A subclass of gaussian_kde that allows flexible choice of bandwidth
 
     Is not necessary with scipy >= 0.10.
@@ -228,7 +229,7 @@ class GaussianKDE(gaussian_kde):
 
 
 
-class VonMisesMixture(GenericLikelihoodModel):
+class VonMisesMixture(GenericLikelihoodModel, Struct):
     '''class to estimate a finite mixture of Von Mises distributions
 
     fit and results are inherited from GenericLikelihoodModel
@@ -415,14 +416,17 @@ class VonMisesMixture(GenericLikelihoodModel):
             print 'dist%1d: shape=%6.4f, loc=%6.4f, prob=%6.4f' \
                   % ((ii,) + tuple(pp))
 
-    def plot_dist(self, params, plot_kde=False, xtransform=None, n_bins=50):
+    def plot_dist(self, params, plot_kde=False, xtransform=None, bins=None,
+                  n_bins=50):
         '''plot the pdf given parameters and histogram and kernel estimate
 
         helper for visual evaluation of fit and of components
 
         '''
         import matplotlib.pyplot as plt
-        x0 = np.linspace(-np.pi, np.pi, 51)
+        x0 = np.linspace(-np.pi, np.pi, 181)
+        if bins is None:
+            bins = n_bins
 
         if xtransform is None:
             x0t = x0
@@ -446,7 +450,7 @@ class VonMisesMixture(GenericLikelihoodModel):
         for ii, pdf_i in enumerate(pdf_d):
             plt.plot(x0t, pdf_i[ip], lw=2, label='dist%d' % ii)
 
-        _, _, patches = plt.hist(self.endog, bins=n_bins, normed=True,
+        _, _, patches = plt.hist(self.endog, bins=bins, normed=True,
                                  alpha=0.2, color='b')
         if xtransform is not None:
             for patch in patches:

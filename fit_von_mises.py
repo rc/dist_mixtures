@@ -108,6 +108,31 @@ def get_counts_from_lengths(lengths):
 
     return counts
 
+def spread_by_counts(data, counts, trivial=False):
+    """
+    Spread items in `data` according to `counts`.
+
+    If `trivial` is True, only repeat n-th item of data `counts[n]`
+    times. Otherwise include between `data[n]` and `data[n + 1]` a linear
+    sequence with `counts[n] + 1` items from `data[n]` to `data[n + 1]` without
+    the last item.
+    """
+    if trivial:
+        out = np.repeat(data, counts)
+
+    else:
+        dd = data[-1] - data[-2]
+        data = np.r_[data, data[-1] + dd]
+
+        out = np.empty(counts.sum(), dtype=data.dtype)
+        ii = 0
+        for ic, count in enumerate(counts):
+            out[ii:ii + count] = np.linspace(data[ic], data[ic+1],
+                                             count + 1)[:-1]
+            ii += count
+
+    return out
+
 def fit(data, start_params):
     '''create VonMisesMixture instance and fit to data
     '''
@@ -267,6 +292,8 @@ help = {
     ' mu should be given in degrees in [-90, 90[.',
     'dir_pattern' :
     'pattern that subdrectories should match [default: %default]',
+    'spread_data' :
+    'spread raw data using their counts instead of just repeating them',
     'area_angles' :
     'compute and draw angles of two systems of fibres determined by'
     ' equal histogram areas',
@@ -285,6 +312,9 @@ def main():
     parser.add_option('-d', '--dir-pattern', metavar='pattern',
                       action='store', dest='dir_pattern',
                       default='*', help=help['dir_pattern'])
+    parser.add_option('', '--spread-data',
+                      action='store_true', dest='spread_data',
+                      default=False, help=help['spread_data'])
     parser.add_option('-a', '--area-angles',
                       action='store_true', dest='area_angles',
                       default=False, help=help['area_angles'])
@@ -337,7 +367,8 @@ def main():
 
         # Simulate the "random process" the histogram was done from.
         counts = get_counts_from_lengths(data[:, 1])
-        fdata = np.repeat(data[:, 0], counts)
+        fdata = spread_by_counts(data[:, 0], counts,
+                                 trivial=options.spread_data == False)
 
         print 'simulated counts range:', counts.min(), counts.max()
 
@@ -361,7 +392,8 @@ def main():
                                  name='%d components' % options.n_components)
 
         xtr = lambda x: transform_pi_deg(x, neg_shift=neg_shift)
-        fig = res.model.plot_dist(res.params, xtransform=xtr)
+        rbins = transform_2pi(bins) - np.pi
+        fig = res.model.plot_dist(res.params, xtransform=xtr, bins=rbins)
         fig.axes[0].set_title('Estimated distribution')
 
         figname = os.path.join(output_dir, dir_base + '-fit-%d.png'
