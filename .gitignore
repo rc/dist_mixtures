@@ -1,0 +1,5 @@
+*
+!*/
+!*.py
+!analyses/*.py
+!dist_mixtures/*.py
