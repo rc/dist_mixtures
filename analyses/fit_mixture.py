@@ -46,7 +46,7 @@ class DataSource(Struct):
     def get_state(self):
         return self.state.data, self.state.fdata, self.state.bins
 
-def get_start_params(n_components, params):
+def get_start_params(n_components, params=None):
     start_params = np.zeros(n_components * 3 - 1)
     n2 = 2 * n_components
     if params is None:
