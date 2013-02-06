@@ -3,6 +3,9 @@ import scipy.sparse as sp
 
 class Struct(object):
 
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
     def _format_sequence(self, seq, threshold):
         threshold_half = threshold / 2
 

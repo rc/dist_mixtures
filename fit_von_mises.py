@@ -14,7 +14,7 @@ import analyses.transforms as tr
 import analyses.plots as pl
 from analyses.logs import CSVLog
 from analyses.area_angles import get_area_angles
-from analyses.fit_mixture import get_start_params, fit
+from analyses.fit_mixture import get_start_params, fit, DataSource
 
 usage = '%prog [options] pattern data_dir output_dir\n' + __doc__.rstrip()
 
@@ -84,28 +84,8 @@ def main():
     get_data = io.locate_files(pattern, data_dir,
                                dir_pattern=options.dir_pattern,
                                group_last_level=True)
-    for filenames in get_data:
-        dir_base, base_names = io.split_dir_base(filenames)
-        print '*****'
-        print 'directory base:',  dir_base
-
-        data = io.load_data(filenames, transform=tr.transform_2pi)
-
-        print 'data range:', data[:, 1].min(), data[:, 1].max()
-
-        # Simulate the "random process" the histogram was done from.
-        counts = tr.get_counts_from_lengths(data[:, 1])
-        fdata = tr.spread_by_counts(data[:, 0], counts,
-                                    trivial=options.spread_data == False)
-
-        print 'simulated counts range:', counts.min(), counts.max()
-
-        ddata = np.sort(tr.transform_pi_deg(data[:, 0], neg_shift=neg_shift))
-        dd = ddata[1] - ddata[0]
-        all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
-        bins = all_bins[::4]
-
-        figname = os.path.join(output_dir, dir_base + '-data.png')
+    source = DataSource(get_data, options.spread_data, neg_shift)
+    for data, fdata, bins in source():
         fig = pl.plot_data(data, fdata, bins, neg_shift=neg_shift)
 
         if options.area_angles:
@@ -155,7 +135,8 @@ def main():
 
         fit_criteria = [-res.llf, res.aic, res.bic]
 
-        log.write_row(dir_base, base_names, sparams, flags, fit_criteria)
+        log.write_row(source.current.dir_base, source.current.base_names,
+                      sparams, flags, fit_criteria)
 
         if options.show:
             plt.show()
