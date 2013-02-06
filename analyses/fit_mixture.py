@@ -73,3 +73,20 @@ def fit(data, start_params):
                   gtol=1e-9) #False)
 
     return res
+
+def log_results(log, result, source):
+    """
+    Log the fitting results.
+    """
+    sparams = result.model.get_summary_params(result.params)[:, [1, 0, 2]]
+    sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),
+                                        neg_shift=source.neg_shift)
+    flags = ['']
+    if not result.mle_retvals['converged']:
+        flags[0] = '*'
+    print 'flags:', flags
+
+    fit_criteria = [-result.llf, result.aic, result.bic]
+
+    log.write_row(source.current.dir_base, source.current.base_names,
+                  sparams, flags, fit_criteria)

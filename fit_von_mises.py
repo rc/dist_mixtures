@@ -13,7 +13,7 @@ import analyses.ioutils as io
 import analyses.transforms as tr
 import analyses.plots as pl
 from analyses.logs import CSVLog
-from analyses.fit_mixture import get_start_params, fit, DataSource
+from analyses.fit_mixture import get_start_params, fit, log_results, DataSource
 
 usage = '%prog [options] pattern data_dir output_dir\n' + __doc__.rstrip()
 
@@ -94,18 +94,7 @@ def main():
         pl.plot_estimated_dist(output_dir, res, source)
         pl.plot_histogram_comparison(output_dir, res, source)
 
-        sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
-        sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),
-                                            neg_shift=neg_shift)
-        flags = ['']
-        if not res.mle_retvals['converged']:
-            flags[0] = '*'
-        print 'flags:', flags
-
-        fit_criteria = [-res.llf, res.aic, res.bic]
-
-        log.write_row(source.current.dir_base, source.current.base_names,
-                      sparams, flags, fit_criteria)
+        log_results(log, res, source)
 
         if options.show:
             plt.show()
