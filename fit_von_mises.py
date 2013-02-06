@@ -97,11 +97,9 @@ def main():
         sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
         sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),
                                             neg_shift=neg_shift)
-        flags = [''] * 2
-        if not (sparams[:, 1] > 0.0).all():
-            flags[0] = '*'
+        flags = ['']
         if not res.mle_retvals['converged']:
-            flags[1] = '*'
+            flags[0] = '*'
         print 'flags:', flags
 
         fit_criteria = [-res.llf, res.aic, res.bic]
