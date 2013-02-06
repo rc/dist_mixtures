@@ -13,7 +13,6 @@ import analyses.ioutils as io
 import analyses.transforms as tr
 import analyses.plots as pl
 from analyses.logs import CSVLog
-from analyses.area_angles import get_area_angles
 from analyses.fit_mixture import get_start_params, fit, DataSource
 
 usage = '%prog [options] pattern data_dir output_dir\n' + __doc__.rstrip()
@@ -86,42 +85,14 @@ def main():
                                group_last_level=True)
     source = DataSource(get_data, options.spread_data, neg_shift)
     for data, fdata, bins in source():
-        fig = pl.plot_data(data, fdata, bins, neg_shift=neg_shift)
-
-        if options.area_angles:
-            pl.draw_areas(fig.axes[0],
-                          *get_area_angles(data, neg_shift=neg_shift))
-
-        fig.savefig(figname)
+        pl.plot_raw_data(output_dir, source, area_angles=options.area_angles)
 
         res = fit(fdata, start_params)
-
         res.model.summary_params(res.params,
                                  name='%d components' % options.n_components)
 
-        xtr = lambda x: tr.transform_pi_deg(x, neg_shift=neg_shift)
-        rbins = tr.transform_2pi(bins) - np.pi
-        fig = res.model.plot_dist(res.params, xtransform=xtr, bins=rbins)
-        fig.axes[0].set_title('Estimated distribution')
-
-        figname = os.path.join(output_dir, dir_base + '-fit-%d.png'
-                               % options.n_components)
-        fig.savefig(figname)
-
-        try:
-            rvs, sizes = res.model.rvs_mix(res.params, size=fdata.shape[0],
-                                           ret_sizes=True)
-        except ValueError:
-            pass
-
-        else:
-            rvs = tr.fix_range(rvs)
-
-            figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
-                                   % options.n_components)
-            fig = pl.plot_rvs_comparison(fdata, rvs, sizes, bins,
-                                         neg_shift=neg_shift)
-            fig.savefig(figname)
+        pl.plot_estimated_dist(output_dir, res, source)
+        pl.plot_histogram_comparison(output_dir, res, source)
 
         sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
         sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),

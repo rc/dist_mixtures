@@ -1,7 +1,9 @@
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-from analyses.transforms import transform_pi_deg
+from analyses.transforms import transform_pi_deg, transform_2pi, fix_range
 
 def plot_data(data, fdata, bins, neg_shift):
     '''create figure with plot of raw data and histogram in subplots
@@ -77,3 +79,44 @@ def draw_areas(ax, x0, xm, x1, arh1, arh2):
     ax.text(xh, 0.75 * h1, '%+.2f' % (xh - xm))
 
     ax.text(xm, 0.25 * (h0 + h1), '%.2f' % xm)
+
+def plot_raw_data(output_dir, source, area_angles=False):
+    from analyses.area_angles import get_area_angles
+
+    data, fdata, bins = source.get_state()
+
+    figname = os.path.join(output_dir, source.current.dir_base + '-data.png')
+    fig = plot_data(data, fdata, bins, neg_shift=source.neg_shift)
+
+    if area_angles:
+        draw_areas(fig.axes[0],
+                   *get_area_angles(data, neg_shift=source.neg_shift))
+
+    fig.savefig(figname)
+
+def plot_estimated_dist(output_dir, result, source):
+    data, fdata, bins = source.get_state()
+
+    xtr = lambda x: transform_pi_deg(x, neg_shift=source.neg_shift)
+    rbins = transform_2pi(bins) - np.pi
+    fig = result.model.plot_dist(result.params, xtransform=xtr, bins=rbins)
+    fig.axes[0].set_title('Estimated distribution')
+
+    n_components = (len(result.params) - 2) / 3 + 1
+    figname = os.path.join(output_dir, source.current.dir_base + '-fit-%d.png'
+                           % n_components)
+    fig.savefig(figname)
+
+def plot_histogram_comparison(output_dir, result, source):
+    data, fdata, bins = source.get_state()
+
+    rvs, sizes = result.model.rvs_mix(result.params, size=fdata.shape[0],
+                                      ret_sizes=True)
+    rvs = fix_range(rvs)
+
+    n_components = (len(result.params) - 2) / 3 + 1
+    figname = os.path.join(output_dir, source.current.dir_base + '-cmp-%d.png'
+                           % n_components)
+    fig = plot_rvs_comparison(fdata, rvs, sizes, bins,
+                              neg_shift=source.neg_shift)
+    fig.savefig(figname)
