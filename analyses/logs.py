@@ -3,7 +3,9 @@ Logging.
 """
 import csv
 
-class CSVLog(object):
+from dist_mixtures.base import Struct
+
+class CSVLog(Struct):
     """
     Log von Mises mixture fitting results.
     """
