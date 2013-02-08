@@ -54,9 +54,20 @@ def get_start_params(n_components, params=None):
         start_params[:n2:2] = 2.0
 
     else:
-        aux = np.array([float(ii) for ii in params.split(',')])
-        start_params[:n2:2] = aux[1::2] # kappa.
-        start_params[1:n2:2] = tr.transform_2pi(aux[0::2]) # mu.
+        if isinstance(params, str):
+            params = [float(ii) for ii in params.split(',')]
+
+        params = np.asarray(params)
+        nn = params.shape[0] - 1
+        if nn < n2:
+            start_params[:nn:2] = params[:nn:2] # kappa.
+            start_params[1:nn:2] = params[1:nn:2] # mu.
+            start_params[nn::2] = params[-2] # kappa.
+            start_params[nn+1::2] = params[-1] # mu.
+
+        else:
+            start_params[:n2:2] = params[:n2:2] # kappa.
+            start_params[1:n2:2] = params[1:n2:2] # mu.
 
     return start_params
 
