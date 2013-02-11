@@ -43,6 +43,8 @@ help = {
     'area_angles' :
     'compute and draw angles of two systems of fibres determined by'
     ' equal histogram areas',
+    'neg_shift' :
+    'do not add 180 degrees to negative angles',
     'show' :
     'show the figures',
 }
@@ -70,6 +72,9 @@ def get_options_parser():
     parser.add_option('-a', '--area-angles',
                       action='store_true', dest='area_angles',
                       default=False, help=help['area_angles'])
+    parser.add_option('', '--no-neg-shift',
+                      action='store_false', dest='neg_shift',
+                      default=True, help=help['neg_shift'])
     parser.add_option('-s', '--show',
                       action='store_true', dest='show',
                       default=False, help=help['show'])
@@ -105,8 +110,6 @@ def main():
     else:
         psets = create_parameter_sets(default_conf)
 
-    neg_shift = True
-
     logs = []
     for ii, pset in enumerate(psets):
         previous = psets[ii - 1] if ii > 0 else None
@@ -122,7 +125,7 @@ def main():
     get_data = io.locate_files(pattern, data_dir,
                                dir_pattern=options.dir_pattern,
                                group_last_level=True)
-    source = DataSource(get_data, options.spread_data, neg_shift)
+    source = DataSource(get_data, options.spread_data, options.neg_shift)
     for data, fdata, bins in source():
         pl.plot_raw_data(psets[0].output_dir, source,
                          area_angles=options.area_angles)
