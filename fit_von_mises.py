@@ -95,6 +95,7 @@ def main():
             'n_components' : 2,
             'parameters' : [2.0, 0.0], # Starting value.
             'solver' : ('bfgs', {'gtol' : 1e-8}),
+            'output_dir' : defaults['output_dir']
         }
     ]
 
