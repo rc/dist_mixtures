@@ -6,13 +6,12 @@ distributions.
 import os
 from optparse import OptionParser
 
-import numpy as np
 import matplotlib.pyplot as plt
 
 import analyses.ioutils as io
-import analyses.transforms as tr
 import analyses.plots as pl
-from analyses.logs import CSVLog
+from analyses.logs import create_logs
+from analyses.parameter_sets import ParameterSets
 from analyses.fit_mixture import get_start_params, fit, log_results, DataSource
 
 usage = '%prog [options] pattern data_dir\n' + __doc__.rstrip()
@@ -101,26 +100,17 @@ def main():
 
     if (options.conf is not None) and (options.n_components is None):
         import imp
-        from analyses.parameter_sets import create_parameter_sets
         name = os.path.splitext(options.conf)[0]
         aux = imp.find_module(name)
         cc = imp.load_module('pars', *aux)
-        psets = create_parameter_sets(cc.parameter_sets)
+        psets = ParameterSets.from_conf(cc.parameter_sets)
 
     else:
-        psets = create_parameter_sets(default_conf)
+        psets = ParameterSets.from_conf(default_conf)
 
-    logs = []
-    for ii, pset in enumerate(psets):
-        previous = psets[ii - 1] if ii > 0 else None
-        pset.override(options, default_conf[0], previous)
+    psets.setup_options(options, default_conf=default_conf)
 
-        io.ensure_path(pset.output_dir)
-
-        log_name = os.path.join(pset.output_dir, 'log_%d.csv' % ii)
-        log = CSVLog(log_name, pset.n_components)
-        log.write_header()
-        logs.append(log)
+    logs = create_logs(psets)
 
     get_data = io.locate_files(pattern, data_dir,
                                dir_pattern=options.dir_pattern,

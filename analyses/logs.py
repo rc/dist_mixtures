@@ -2,8 +2,26 @@
 Logging.
 """
 import csv
+import os
 
 from dist_mixtures.base import Struct
+
+def create_logs(psets):
+    """
+    Create CSV logs for given parameter sets.
+    """
+    import analyses.ioutils as io
+
+    logs = []
+    for ii, pset in enumerate(psets):
+        io.ensure_path(pset.output_dir)
+
+        log_name = os.path.join(pset.output_dir, 'log_%d.csv' % ii)
+        log = CSVLog(log_name, pset.n_components)
+        log.write_header()
+        logs.append(log)
+
+    return logs
 
 class CSVLog(Struct):
     """
