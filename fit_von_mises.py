@@ -6,13 +6,9 @@ distributions.
 import os
 from optparse import OptionParser
 
-import matplotlib.pyplot as plt
-
 import analyses.ioutils as io
-import analyses.plots as pl
-from analyses.logs import create_logs
 from analyses.parameter_sets import ParameterSets
-from analyses.fit_mixture import get_start_params, fit, log_results, DataSource
+from analyses.fit_mixture import analyze, DataSource
 
 usage = '%prog [options] pattern data_dir\n' + __doc__.rstrip()
 
@@ -111,40 +107,15 @@ def main():
 
     psets.setup_options(options, default_conf=default_conf)
 
-    logs = create_logs(psets)
-
     get_data = io.locate_files(pattern, data_dir,
                                dir_pattern=options.dir_pattern,
                                group_last_level=True)
     source = DataSource(get_data, options.spread_data, options.neg_shift)
-    for data, fdata, bins in source():
-        pl.plot_raw_data(psets[0].output_dir, source,
-                         area_angles=options.area_angles)
 
-        # Loop over parameter sets. Each has its own CSVLog.
-        res = None
-        for ii, pset in enumerate(psets):
-            if (ii > 0) and pset.parameters == 'previous':
-                start_parameters = get_start_params(pset.n_components,
-                                                    res.params)
-
-            else:
-                start_parameters = get_start_params(pset.n_components,
-                                                    pset.parameters)
-            print 'starting parameters:', start_parameters
-
-            res = fit(fdata, start_parameters)
-            res.model.summary_params(res.params,
-                                     name='%d components' % pset.n_components)
-
-            pl.plot_estimated_dist(pset.output_dir, res, source)
-            pl.plot_histogram_comparison(pset.output_dir, res, source)
-
-            log = logs[ii]
-            log_results(log, res, source)
-
-            if options.show:
-                plt.show()
+    logs = analyze(source, psets, options)
+    for ii, log in enumerate(logs):
+        print psets[ii]
+        print log
 
 if __name__ == '__main__':
     main()

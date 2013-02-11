@@ -1,10 +1,12 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from dist_mixtures.base import Struct
 from dist_mixtures.mixture_von_mises import VonMisesMixture
 
 import analyses.transforms as tr
 import analyses.ioutils as io
+import analyses.plots as pl
 
 class DataSource(Struct):
 
@@ -45,6 +47,51 @@ class DataSource(Struct):
 
     def get_state(self):
         return self.state.data, self.state.fdata, self.state.bins
+
+def analyze(source, psets, options):
+    """
+    Analyze data provided by source using given parameter sets.
+
+    Returns
+    -------
+    logs : list of CSVLog
+        The fitting information and results.
+    """
+    from analyses.logs import create_logs
+
+    logs = create_logs(psets)
+
+    for data, fdata, bins in source():
+        pl.plot_raw_data(psets[0].output_dir, source,
+                         area_angles=options.area_angles)
+
+        # Loop over parameter sets. Each has its own CSVLog.
+        res = None
+        for ii, pset in enumerate(psets):
+            print pset
+            if (ii > 0) and pset.parameters == 'previous':
+                start_parameters = get_start_params(pset.n_components,
+                                                    res.params)
+
+            else:
+                start_parameters = get_start_params(pset.n_components,
+                                                    pset.parameters)
+            print 'starting parameters:', start_parameters
+
+            res = fit(fdata, start_parameters)
+            res.model.summary_params(res.params,
+                                     name='%d components' % pset.n_components)
+
+            pl.plot_estimated_dist(pset.output_dir, res, source)
+            pl.plot_histogram_comparison(pset.output_dir, res, source)
+
+            log = logs[ii]
+            log_results(log, res, source)
+
+            if options.show:
+                plt.show()
+
+    return logs
 
 def get_start_params(n_components, params=None):
     start_params = np.zeros(n_components * 3 - 1)
