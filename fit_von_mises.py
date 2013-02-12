@@ -8,7 +8,8 @@ from optparse import OptionParser
 
 import analyses.ioutils as io
 from analyses.parameter_sets import ParameterSets
-from analyses.fit_mixture import analyze, print_results, DataSource
+from analyses.fit_mixture import (analyze, print_results, make_summary,
+                                  print_summary, DataSource)
 
 usage = '%prog [options] pattern data_dir\n' + __doc__.rstrip()
 
@@ -113,8 +114,10 @@ def main():
     source = DataSource(get_data, options.spread_data, options.neg_shift)
 
     logs = analyze(source, psets, options)
-
     print_results(psets, logs)
+
+    summary = make_summary(logs)
+    print_summary(summary, logs)
 
 if __name__ == '__main__':
     main()

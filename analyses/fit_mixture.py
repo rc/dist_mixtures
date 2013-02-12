@@ -181,3 +181,72 @@ def print_results(psets, logs):
         for item in log.items:
             print '------------------------------------------------------'
             print item
+
+def make_summary(logs):
+    """
+    Make a summary table of all results.
+
+    The best parameter set according to each criterion is selected.
+
+    Parameters
+    ----------
+    logs : list of CSVLog
+        A log with fitting results for each parameter set.
+
+    Returns
+    -------
+    summary : dict
+        The summary dictionary with data directory base names as keys.
+    """
+    dir_bases = [item.dir_base for item in logs[0].items]
+    summary = {}
+    for ii, dir_base in enumerate(dir_bases):
+        # Results for dir_base for all parameter sets.
+        items = [log.items[ii] for log in logs]
+
+        criteria = [item.fit_criteria for item in items]
+        pset_ids = np.array(criteria).argmin(axis=0)
+
+        converged = np.take([item.converged for item in items], pset_ids)
+
+        probs = np.take([item.params[:, 2] for item in items], pset_ids)
+
+        summary[dir_base] = zip(pset_ids, converged, probs)
+
+    return summary
+
+_summary_header = """
+Summary of results
+------------------
+
+Best parameter set id for each criterion is given. Solver convergence is
+denoted with '*'. Component probabilities for each criterion are given as well.
+
+Row format: dir_base | llf | aic | bic || llf probs | aic probs | bic probs
+"""
+
+def print_summary(summary, logs):
+    """
+    Print a summary table.
+    """
+    print _summary_header
+
+    dir_bases = [item.dir_base for item in logs[0].items]
+    max_len = reduce(max, (len(ii) for ii in dir_bases), 0)
+    row = '%%%ds | %%2d%%1s | %%2d%%1s | %%2d%%1s || %%s' % max_len
+
+    star = {False : '', True : '*'}
+    for dir_base in dir_bases:
+        item = summary[dir_base]
+
+        aux = []
+        for ii in item:
+            aux.extend([ii[0], star[ii[1]]])
+
+        aux2 = []
+        for ii in item:
+            probs = ii[2]
+            aux2.append((' '.join(['%.2f'] * len(probs))) % tuple(probs))
+        aux2 = ' | '.join(aux2)
+
+        print row % ((dir_base,) + tuple(aux) + (aux2,))
