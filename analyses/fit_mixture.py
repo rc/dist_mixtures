@@ -152,16 +152,18 @@ def fit(data, start_params, solver_conf):
 def log_results(log, result, source):
     """
     Log the fitting results.
+
+    Notes
+    -----
+    The resulting mixture parameters are stored into a 2d array with rows
+    [location in degrees (mu), shape (kappa), probability].
     """
     sparams = result.model.get_summary_params(result.params)[:, [1, 0, 2]]
     sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),
                                         neg_shift=source.neg_shift)
-    flags = ['']
-    if not result.mle_retvals['converged']:
-        flags[0] = '*'
-    print 'flags:', flags
+    converged = result.mle_retvals['converged']
 
     fit_criteria = [-result.llf, result.aic, result.bic]
 
     log.write_row(source.current.dir_base, source.current.base_names,
-                  sparams, flags, fit_criteria)
+                  sparams, converged, fit_criteria)

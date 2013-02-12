@@ -31,11 +31,15 @@ class CSVLog(Struct):
     def __init__(self, log_name, n_components):
         self.log_name = log_name
         self.n_components = n_components
+        self.reset()
+
+    def reset(self):
+        self.items = []
 
     def write_header(self):
         fd = open(self.log_name, 'w')
 
-        header = ['directory', 'fit not converged flag']
+        header = ['directory', 'converged']
         for ii in range(self.n_components):
             header.extend(['mu%d' % ii, 'kappa%d' % ii, 'prob%d' % ii])
         header.extend(['nllf', 'aic', 'bic', 'number of files', 'filenames'])
@@ -45,11 +49,16 @@ class CSVLog(Struct):
 
         fd.close()
 
-    def write_row(self, dir_base, base_names, params, flags, fit_criteria):
+    def write_row(self, dir_base, base_names, params, converged, fit_criteria):
+        item = Struct(dir_base=dir_base, base_names=base_names,
+                      params=params, converged=converged,
+                      fit_criteria=fit_criteria)
+        self.items.append(item)
+
         fd = open(self.log_name, 'a')
 
         writer = csv.writer(fd)
-        writer.writerow([dir_base, flags[0]]
+        writer.writerow([dir_base, int(converged)]
                         + params.ravel().tolist() + fit_criteria
                         + [len(base_names), ', '.join(base_names)])
         fd.close()
