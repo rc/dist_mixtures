@@ -90,7 +90,7 @@ def main():
         {
             'n_components' : 2,
             'parameters' : [2.0, 0.0], # Starting value.
-            'solver' : ('bfgs', {'gtol' : 1e-8}),
+            'solver' : ('bfgs', {'gtol' : 1e-8, 'disp' : True}),
             'output_dir' : defaults['output_dir']
         }
     ]
