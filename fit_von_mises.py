@@ -8,7 +8,7 @@ from optparse import OptionParser
 
 import analyses.ioutils as io
 from analyses.parameter_sets import ParameterSets
-from analyses.fit_mixture import analyze, DataSource
+from analyses.fit_mixture import analyze, print_results, DataSource
 
 usage = '%prog [options] pattern data_dir\n' + __doc__.rstrip()
 
@@ -114,14 +114,7 @@ def main():
 
     logs = analyze(source, psets, options)
 
-    print '######################################################'
-    for ii, log in enumerate(logs):
-        print '======================================================'
-        print psets[ii]
-        print log
-        for item in log.items:
-            print '------------------------------------------------------'
-            print item
+    print_results(psets, logs)
 
 if __name__ == '__main__':
     main()

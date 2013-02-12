@@ -168,3 +168,16 @@ def log_results(log, result, source):
 
     log.write_row(source.current.dir_base, source.current.base_names,
                   sparams, converged, fit_criteria)
+
+def print_results(psets, logs):
+    """
+    Print fitting results and corresponding parameter sets.
+    """
+    print '######################################################'
+    for ii, log in enumerate(logs):
+        print '======================================================'
+        print psets[ii]
+        print log
+        for item in log.items:
+            print '------------------------------------------------------'
+            print item
