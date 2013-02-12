@@ -113,9 +113,15 @@ def main():
     source = DataSource(get_data, options.spread_data, options.neg_shift)
 
     logs = analyze(source, psets, options)
+
+    print '######################################################'
     for ii, log in enumerate(logs):
+        print '======================================================'
         print psets[ii]
         print log
+        for item in log.items:
+            print '------------------------------------------------------'
+            print item
 
 if __name__ == '__main__':
     main()

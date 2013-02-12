@@ -19,7 +19,7 @@ class DataSource(Struct):
     def __call__(self):
         for filenames in self.get_filenames:
             dir_base, base_names = io.split_dir_base(filenames)
-            print '*****'
+            print '======================================================'
             print 'directory base:',  dir_base
 
             data = io.load_data(filenames, transform=tr.transform_2pi)
@@ -68,6 +68,7 @@ def analyze(source, psets, options):
         # Loop over parameter sets. Each has its own CSVLog.
         res = None
         for ii, pset in enumerate(psets):
+            print '------------------------------------------------------'
             print pset
             if (ii > 0) and pset.parameters == 'previous':
                 start_parameters = get_start_params(pset.n_components,
