@@ -78,7 +78,7 @@ def analyze(source, psets, options):
                                                     pset.parameters)
             print 'starting parameters:', start_parameters
 
-            res = fit(fdata, start_parameters)
+            res = fit(fdata, start_parameters, pset.solver_conf)
             res.model.summary_params(res.params,
                                      name='%d components' % pset.n_components)
 
@@ -118,17 +118,34 @@ def get_start_params(n_components, params=None):
 
     return start_params
 
-def fit(data, start_params):
-    '''create VonMisesMixture instance and fit to data
+def fit(data, start_params, solver_conf):
+    '''
+    Create VonMisesMixture instance and fit to data.
+
+    Parameters
+    ----------
+    data : array
+        The data to be fitted.
+    start_params : array of length 3 * n_component - 1
+        The vector of starting parameters - shape plus location per component
+        and probabilities for all components except the last one. Its length
+        determines the number of components.
+    solver_conf : (str, dict)
+        Solver configuration tuple consisting of name and options dictionary.
+
+    Returns
+    -------
+    res : GenericLikelihoodModelResults instance
+        The results object.
+
+    Notes
+    -----
+    With master of statsmodels we can use bfgs because the objective function
+    is now normalized with 1/nobs we can increase the gradient tolerance gtol.
     '''
     mod = VonMisesMixture(data)
-    #with master of statsmodels we can use bfgs
-    #because the objective function is now normalized with 1/nobs we can
-    #increase the gradient tolerance gtol
-    #res = mod.fit(start_params=start_params, method='nm', disp=True)
-    #res = mod.fit(start_params=res.params, method='bfgs', disp=True) #False)
-    res = mod.fit(start_params=start_params, method='bfgs', disp=True,
-                  gtol=1e-9) #False)
+    res = mod.fit(start_params=start_params, method=solver_conf[0],
+                  **solver_conf[1])
 
     return res
 
