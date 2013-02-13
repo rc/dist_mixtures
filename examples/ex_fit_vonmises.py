@@ -10,12 +10,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from fit_von_mises import (CSVLog, load_data, io, get_counts_from_lengths,
-                           spread_by_counts,
-                           transform_2pi, transform_pi_deg, fit,
-                           plot_data, draw_areas, get_area_angles,
-                           plot_rvs_comparison, fix_range
-                           )
+import analyses.transforms as tr
+import analyses.ioutils as io
+import analyses.plots as pl
+from analyses.logs import CSVLog
+from analyses.fit_mixture import fit
 
 import dist_mixtures.mixture_von_mises as mixvn
 #from dist_mixtures.mixture_von_mises import VonMisesMixtureBinned
@@ -55,7 +54,7 @@ if __name__ == '__main__':
     else:
         aux = np.array([float(ii) for ii in options.params.split(',')])
         start_params[:n2:2] = aux[1::2] # kappa.
-        start_params[1:n2:2] = transform_2pi(aux[0::2]) # mu.
+        start_params[1:n2:2] = tr.transform_2pi(aux[0::2]) # mu.
 
     start_params[n2:] = np.random.uniform(-0.1, 0.1, options.n_components - 1)
 
@@ -80,31 +79,33 @@ if __name__ == '__main__':
         print '*****'
         print 'directory base:',  dir_base
 
-        data = load_data(filenames, transform=transform_2pi)
+        data = io.load_data(filenames, transform=tr.transform_2pi)
 
         print 'data range:', data[:, 1].min(), data[:, 1].max()
 
         # Simulate the "random process" the histogram was done from.
-        counts = get_counts_from_lengths(data[:, 1])
-        fdata = spread_by_counts(data[:, 0], counts)
+        counts = tr.get_counts_from_lengths(data[:, 1])
+        fdata = tr.spread_by_counts(data[:, 0], counts)
 
         print 'simulated counts range:', counts.min(), counts.max(), counts.sum()
 
-        ddata = np.sort(transform_pi_deg(data[:, 0], neg_shift=neg_shift))
+        ddata = np.sort(tr.transform_pi_deg(data[:, 0], neg_shift=neg_shift))
         dd = ddata[1] - ddata[0]
         all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
         bins = all_bins #[::4]
 
         figname = os.path.join(output_dir, dir_base + '-data.png')
-        fig = plot_data(data, fdata, bins, neg_shift=neg_shift)
+        fig = pl.plot_data(data, fdata, bins, neg_shift=neg_shift)
 
         if options.area_angles:
-            draw_areas(fig.axes[0],
-                       *get_area_angles(data, neg_shift=neg_shift))
+            pl.draw_areas(fig.axes[0],
+                          *pl.get_area_angles(data, neg_shift=neg_shift))
 
         fig.savefig(figname)
 
-        res = fit(fdata, start_params)
+        aux = Store()
+        aux.fdata = fdata
+        res = fit(aux, start_params, mixvn.VonMisesMixture, ('bfgs', {}))
         #normalize parameters, rotate, scipy cdf breaks on negative kappa
         import ex_cdf as e
         res.params = e.normalize_params(res.params)
@@ -112,7 +113,7 @@ if __name__ == '__main__':
         res.model.summary_params(res.params,
                                  name='%d components' % options.n_components)
 
-        xtr = lambda x: transform_pi_deg(x, neg_shift=neg_shift)
+        xtr = lambda x: tr.transform_pi_deg(x, neg_shift=neg_shift)
         fig = res.model.plot_dist(res.params, xtransform=xtr, n_bins=180)
         fig.axes[0].set_title('Estimated distribution')
 
@@ -127,27 +128,23 @@ if __name__ == '__main__':
             pass
 
         else:
-            rvs = fix_range(rvs)
+            rvs = tr.fix_range(rvs)
 
             figname = os.path.join(output_dir, dir_base + '-cmp-%d.png'
                                    % options.n_components)
-            fig = plot_rvs_comparison(fdata, rvs, sizes, bins,
-                                      neg_shift=neg_shift)
+            fig = pl.plot_rvs_comparison(fdata, rvs, sizes, bins,
+                                         neg_shift=neg_shift)
             fig.savefig(figname)
 
         sparams = res.model.get_summary_params(res.params)[:, [1, 0, 2]]
-        sparams[:, 0] = transform_pi_deg(fix_range(sparams[:, 0]),
-                                         neg_shift=neg_shift)
-        flags = [''] * 2
-        if not (sparams[:, 1] > 0.0).all():
-            flags[0] = '*'
-        if not res.mle_retvals['converged']:
-            flags[1] = '*'
-        print 'flags:', flags
+        sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),
+                                            neg_shift=neg_shift)
+        converged = res.mle_retvals['converged']
+        print 'converged:', converged
 
         fit_criteria = [-res.llf, res.aic, res.bic]
 
-        log.write_row(dir_base, base_names, sparams, flags, fit_criteria)
+        log.write_row(dir_base, base_names, sparams, converged, fit_criteria)
 
         #goodness-of-fit chisquare test
 
@@ -173,7 +170,7 @@ if __name__ == '__main__':
 
         #comparison with raw length distribution
         #plot not shifted to center
-        data_raw = load_data(filenames, transform=None)
+        data_raw = io.load_data(filenames, transform=None)
         rad_diff = data[1,0] - data[0,0]
         plt.figure()
         plt.plot(data[:,0], data_raw[:,1] / data_raw[:,1].sum(),
