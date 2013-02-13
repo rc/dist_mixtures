@@ -76,8 +76,9 @@ def analyze(source, psets, options):
                                                     res.params)
 
             else:
+                zz = np.zeros(pset.n_components - 1, dtype=np.float64)
                 start_parameters = get_start_params(pset.n_components,
-                                                    pset.parameters)
+                                                    np.r_[pset.parameters, zz])
             print 'starting parameters:', start_parameters
 
             res = fit(source_data, start_parameters,
@@ -108,12 +109,13 @@ def get_start_params(n_components, params=None):
             params = [float(ii) for ii in params.split(',')]
 
         params = np.asarray(params)
-        nn = params.shape[0] - 1
-        if nn < n2:
+        ncp = (len(params) - 2) / 3 + 1
+        if ncp < n_components:
+            nn = 2 * ncp
             start_params[:nn:2] = params[:nn:2] # kappa.
             start_params[1:nn:2] = params[1:nn:2] # mu.
-            start_params[nn::2] = params[-2] # kappa.
-            start_params[nn+1::2] = params[-1] # mu.
+            start_params[nn:n2:2] = params[nn-2] # kappa.
+            start_params[nn+1:n2:2] = params[nn-1] # mu.
 
         else:
             start_params[:n2:2] = params[:n2:2] # kappa.
