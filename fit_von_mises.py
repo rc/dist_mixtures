@@ -6,6 +6,7 @@ distributions.
 import os
 from optparse import OptionParser
 
+import dist_mixtures.mixture_von_mises as mvm
 import analyses.ioutils as io
 from analyses.parameter_sets import ParameterSets
 from analyses.fit_mixture import (analyze, print_results, make_summary,
@@ -89,6 +90,7 @@ def main():
 
     default_conf = [
         {
+            'model_class' : mvm.VonMisesMixture,
             'n_components' : 2,
             'parameters' : [2.0, 0.0], # Starting value.
             'solver' : ('bfgs', {'gtol' : 1e-8, 'disp' : True}),

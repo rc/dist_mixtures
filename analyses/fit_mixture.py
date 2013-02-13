@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from dist_mixtures.base import Struct
-from dist_mixtures.mixture_von_mises import VonMisesMixture
+import dist_mixtures.mixture_von_mises as mvm
 
 import analyses.transforms as tr
 import analyses.ioutils as io
@@ -121,18 +121,21 @@ def get_start_params(n_components, params=None):
 
     return start_params
 
-def fit(data, start_params, solver_conf):
+def fit(source_data, start_params, model_class, solver_conf):
     '''
     Create VonMisesMixture instance and fit to data.
 
     Parameters
     ----------
-    data : array
-        The data to be fitted.
+    source_data : Struct with 3 array attributes
+        The data to be fitted - raw data, simulated process data, histogram
+        plot bins.
     start_params : array of length 3 * n_component - 1
         The vector of starting parameters - shape plus location per component
         and probabilities for all components except the last one. Its length
         determines the number of components.
+    model_class : MixtureVonMises or VonMisesMixtureBinned
+        The class used for the fitting.
     solver_conf : (str, dict)
         Solver configuration tuple consisting of name and options dictionary.
 
@@ -146,7 +149,13 @@ def fit(data, start_params, solver_conf):
     With master of statsmodels we can use bfgs because the objective function
     is now normalized with 1/nobs we can increase the gradient tolerance gtol.
     '''
-    mod = VonMisesMixture(data)
+    if model_class == mvm.VonMisesMixture:
+        mod = mvm.VonMisesMixture(source_data.fdata)
+
+    elif model_class == mvm.VonMisesMixtureBinned:
+        bins_exog = np.linspace(-np.pi, np.pi, source_data.data.shape[0] + 1)
+        mod = mvm.VonMisesMixtureBinned(source_data.data[:, 1], bins_exog)
+
     res = mod.fit(start_params=start_params, method=solver_conf[0],
                   **solver_conf[1])
 
