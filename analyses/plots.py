@@ -83,7 +83,7 @@ def draw_areas(ax, x0, xm, x1, arh1, arh2):
 def plot_raw_data(output_dir, source, area_angles=False):
     from analyses.area_angles import get_area_angles
 
-    data, fdata, bins = source.get_state()
+    data, fdata, bins = source.get_source_data()
 
     figname = os.path.join(output_dir, source.current.dir_base + '-data.png')
     fig = plot_data(data, fdata, bins, neg_shift=source.neg_shift)
@@ -95,7 +95,7 @@ def plot_raw_data(output_dir, source, area_angles=False):
     fig.savefig(figname)
 
 def plot_estimated_dist(output_dir, result, source):
-    data, fdata, bins = source.get_state()
+    data, fdata, bins = source.get_source_data()
 
     xtr = lambda x: transform_pi_deg(x, neg_shift=source.neg_shift)
     rbins = transform_2pi(bins) - np.pi
@@ -108,7 +108,7 @@ def plot_estimated_dist(output_dir, result, source):
     fig.savefig(figname)
 
 def plot_histogram_comparison(output_dir, result, source):
-    data, fdata, bins = source.get_state()
+    data, fdata, bins = source.get_source_data()
 
     rvs, sizes = result.model.rvs_mix(result.params, size=fdata.shape[0],
                                       ret_sizes=True)

@@ -14,7 +14,7 @@ class DataSource(Struct):
         Struct.__init__(self, get_filenames=get_filenames,
                         spread_data=spread_data, neg_shift=neg_shift)
         self.current = Struct(filenames=None, dir_base=None, base_names=None)
-        self.state = Struct(data=None, fdata=None, bins=None)
+        self.source_data = Struct(data=None, fdata=None, bins=None)
 
     def __call__(self):
         for filenames in self.get_filenames:
@@ -41,12 +41,13 @@ class DataSource(Struct):
 
             self.current = Struct(filenames=filenames, dir_base=dir_base,
                                   base_names=base_names)
-            self.state = Struct(data=data, fdata=fdata, bins=bins)
+            self.source_data = Struct(data=data, fdata=fdata, bins=bins)
 
-            yield self.get_state()
+            yield self.source_data
 
-    def get_state(self):
-        return self.state.data, self.state.fdata, self.state.bins
+    def get_source_data(self):
+        return (self.source_data.data, self.source_data.fdata,
+                self.source_data.bins)
 
 def analyze(source, psets, options):
     """
@@ -61,7 +62,7 @@ def analyze(source, psets, options):
 
     logs = create_logs(psets)
 
-    for data, fdata, bins in source():
+    for source_data in source():
         pl.plot_raw_data(psets[0].output_dir, source,
                          area_angles=options.area_angles)
 
@@ -79,7 +80,8 @@ def analyze(source, psets, options):
                                                     pset.parameters)
             print 'starting parameters:', start_parameters
 
-            res = fit(fdata, start_parameters, pset.solver_conf)
+            res = fit(source_data, start_parameters,
+                      pset.model_class, pset.solver_conf)
             res.model.summary_params(res.params,
                                      name='%d components' % pset.n_components)
 
