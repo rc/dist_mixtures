@@ -37,7 +37,11 @@ def _override(attr, obj, options, defaults, previous=None):
     value = getattr(obj, attr)
     if value is None:
         if previous is None:
-            setattr(obj, attr, getattr(defaults, attr))
+            if isinstance(defaults, dict):
+                setattr(obj, attr, defaults.get(attr))
+
+            else:
+                setattr(obj, attr, getattr(defaults, attr))
 
         else:
             setattr(obj, attr, getattr(previous, attr))
@@ -49,12 +53,14 @@ class ParameterSet(Struct):
 
     @staticmethod
     def from_conf(conf):
-        return ParameterSet(conf.get('n_components'),
+        return ParameterSet(conf.get('model_class'), conf.get('n_components'),
                             conf.get('parameters'),
                             conf.get('solver'), conf.get('output_dir'))
 
-    def __init__(self, n_components, parameters, solver_conf, output_dir):
-        Struct.__init__(self, n_components=n_components, parameters=parameters,
+    def __init__(self, model_class, n_components, parameters, solver_conf,
+                 output_dir):
+        Struct.__init__(self, model_class=model_class,
+                        n_components=n_components, parameters=parameters,
                         solver_conf=solver_conf, output_dir=output_dir)
 
     def override(self, options, defaults, previous=None):
@@ -62,6 +68,6 @@ class ParameterSet(Struct):
         Override parameter from `options`, provide default values of unspecified
         attributes from `previous` or `defaults`.
         """
-        for attr in ['n_components', 'parameters', 'solver_conf',
-                     'output_dir']:
+        for attr in ['model_class', 'n_components', 'parameters',
+                     'solver_conf', 'output_dir']:
             _override(attr, self, options, defaults, previous=previous)
