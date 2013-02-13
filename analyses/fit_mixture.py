@@ -209,8 +209,8 @@ def make_summary(logs):
 
         converged = np.take([item.converged for item in items], pset_ids)
 
-        probs = np.take([item.params[:, 2] for item in items], pset_ids)
-
+        probs = np.take([item.params[:, 2] for item in items], pset_ids,
+                        axis=0)
         summary[dir_base] = zip(pset_ids, converged, probs)
 
     return summary
