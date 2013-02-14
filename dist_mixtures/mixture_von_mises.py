@@ -559,7 +559,7 @@ class VonMisesMixtureBinned(VonMisesMixture):
 
         params_ = normalize_params(params)
         cdf_bins = self.cdf_mix(params_, x=self.bins)
-        pdf_bins = np.diff(cdf_bins)
+        pdf_bins = np.clip(np.diff(cdf_bins), 1e-20, 1)
         return self.endog * np.log(pdf_bins)
 
     def pmf_bins(self, params):
@@ -569,7 +569,7 @@ class VonMisesMixtureBinned(VonMisesMixture):
         #normalized params, no negative kappa. needed for estimation
         params_ = normalize_params(params)
         cdf_bins = self.cdf_mix(params_, x=self.bins)
-        pdf_bins = np.diff(cdf_bins)
+        pdf_bins = np.clip(np.diff(cdf_bins), 1e-20, 1)
         return pdf_bins
 
 
