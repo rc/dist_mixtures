@@ -152,9 +152,14 @@ def fit(source_data, start_params, model_class, solver_conf):
     is now normalized with 1/nobs we can increase the gradient tolerance gtol.
     '''
     if model_class == mvm.VonMisesMixture:
+        assert np.isfinite(mvm.loglike(start_params,
+                                       source_data.fdata)).all()
         mod = mvm.VonMisesMixture(source_data.fdata)
 
     elif model_class == mvm.VonMisesMixtureBinned:
+        assert np.isfinite(mvm.loglike(start_params,
+                                       source_data.data[:, 1])).all()
+
         bins_exog = np.linspace(-np.pi, np.pi, source_data.data.shape[0] + 1)
         mod = mvm.VonMisesMixtureBinned(source_data.data[:, 1], bins_exog)
 
