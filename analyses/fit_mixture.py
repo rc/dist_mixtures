@@ -114,7 +114,7 @@ def get_start_params(n_components, params=None):
             nn = 2 * ncp
             start_params[:nn:2] = params[:nn:2] # kappa.
             start_params[1:nn:2] = params[1:nn:2] # mu.
-            start_params[nn:n2:2] = params[nn-2] # kappa.
+            start_params[nn:n2:2] = 1.1 * params[nn-2] # kappa.
             start_params[nn+1:n2:2] = params[nn-1] # mu.
 
         else:
