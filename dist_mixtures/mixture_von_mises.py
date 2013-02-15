@@ -428,7 +428,7 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
                   % ((ii,) + tuple(pp))
 
     def plot_dist(self, params, plot_kde=False, xtransform=None, bins=None,
-                  n_bins=50):
+                  n_bins=50, data=None):
         '''plot the pdf given parameters and histogram and kernel estimate
 
         helper for visual evaluation of fit and of components
@@ -438,6 +438,8 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
         x0 = np.linspace(-np.pi, np.pi, 181)
         if bins is None:
             bins = n_bins
+
+        data = data if data is not None else self.endog
 
         if xtransform is None:
             x0t = x0
@@ -454,14 +456,14 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
         plt.plot(x0t, pdf_m[ip], lw=2, label='mixture')
 
         if plot_kde:
-            kde = GaussianKDE(self.endog, (0, 0.5))
+            kde = GaussianKDE(data, (0, 0.5))
             pdf_kde = kde(x0)
             plt.plot(x0t, pdf_kde[ip], lw=2, label='kde')
 
         for ii, pdf_i in enumerate(pdf_d):
             plt.plot(x0t, pdf_i[ip], lw=2, label='dist%d' % ii)
 
-        _, _, patches = plt.hist(self.endog, bins=bins, normed=True,
+        _, _, patches = plt.hist(data, bins=bins, normed=True,
                                  alpha=0.2, color='b')
         if xtransform is not None:
             for patch in patches:

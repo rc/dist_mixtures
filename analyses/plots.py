@@ -99,7 +99,8 @@ def plot_estimated_dist(output_dir, result, source):
 
     xtr = lambda x: transform_pi_deg(x, neg_shift=source.neg_shift)
     rbins = transform_2pi(bins) - np.pi
-    fig = result.model.plot_dist(result.params, xtransform=xtr, bins=rbins)
+    fig = result.model.plot_dist(result.params, xtransform=xtr, bins=rbins,
+                                 data=fdata)
     fig.axes[0].set_title('Estimated distribution')
 
     n_components = (len(result.params) - 2) / 3 + 1
