@@ -223,8 +223,7 @@ def make_summary(logs):
         items = [log.items[ii] for log in logs]
 
         criteria = [item.fit_criteria for item in items]
-        pset_ids = np.array(criteria).argmin(axis=0)
-
+        pset_ids = np.array(criteria).argsort(axis=0)
         converged = np.take([item.converged for item in items], pset_ids)
 
         probs = np.take([item.params[:, 2] for item in items], pset_ids,
@@ -237,7 +236,7 @@ _summary_header = """
 Summary of results
 ------------------
 
-Best parameter set id for each criterion is given. Solver convergence is
+Sorted parameter set ids for each criterion are given. Solver convergence is
 denoted with '*'. Component probabilities for each criterion are given as well.
 
 Row format: dir_base | llf | aic | bic || llf probs | aic probs | bic probs
@@ -254,17 +253,22 @@ def print_summary(summary, logs):
     row = '%%%ds | %%2d%%1s | %%2d%%1s | %%2d%%1s || %%s' % max_len
 
     star = {False : '', True : '*'}
-    for dir_base in dir_bases:
-        item = summary[dir_base]
+    for idb, dir_base in enumerate(dir_bases):
+        items = summary[dir_base]
 
-        aux = []
-        for ii in item:
-            aux.extend([ii[0], star[ii[1]]])
+        for _item in items:
+            item = zip(*_item)
+            aux = []
+            for ii in item:
+                aux.extend([ii[0], star[ii[1]]])
 
-        aux2 = []
-        for ii in item:
-            probs = ii[2]
-            aux2.append((' '.join(['%.2f'] * len(probs))) % tuple(probs))
-        aux2 = ' | '.join(aux2)
+            aux2 = []
+            for ii in item:
+                probs = ii[2]
+                aux2.append((' '.join(['%.2f'] * len(probs))) % tuple(probs))
+            aux2 = ' | '.join(aux2)
 
-        print row % ((dir_base,) + tuple(aux) + (aux2,))
+            print row % ((dir_base,) + tuple(aux) + (aux2,))
+
+        if (idb + 1) < len(dir_bases):
+            print '-' * 79
