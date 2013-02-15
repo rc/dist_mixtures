@@ -86,8 +86,8 @@ def analyze(source, psets, options):
             res.model.summary_params(res.params,
                                      name='%d components' % pset.n_components)
 
-            pl.plot_estimated_dist(pset.output_dir, res, source)
-            pl.plot_histogram_comparison(pset.output_dir, res, source)
+            pl.plot_estimated_dist(pset.output_dir, res, source, ii)
+            pl.plot_histogram_comparison(pset.output_dir, res, source, ii)
 
             log = logs[ii]
             log_results(log, res, source)

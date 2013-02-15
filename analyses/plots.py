@@ -94,7 +94,7 @@ def plot_raw_data(output_dir, source, area_angles=False):
 
     fig.savefig(figname)
 
-def plot_estimated_dist(output_dir, result, source):
+def plot_estimated_dist(output_dir, result, source, pset_id=None):
     data, fdata, bins = source.get_source_data()
 
     xtr = lambda x: transform_pi_deg(x, neg_shift=source.neg_shift)
@@ -103,21 +103,30 @@ def plot_estimated_dist(output_dir, result, source):
                                  data=fdata)
     fig.axes[0].set_title('Estimated distribution')
 
-    n_components = (len(result.params) - 2) / 3 + 1
-    figname = os.path.join(output_dir, source.current.dir_base + '-fit-%d.png'
-                           % n_components)
+    if pset_id is None:
+        name = source.current.dir_base + '-fit.png'
+
+    else:
+        name = source.current.dir_base + '-fit-%d.png' % pset_id
+
+    figname = os.path.join(output_dir, name)
     fig.savefig(figname)
 
-def plot_histogram_comparison(output_dir, result, source):
+def plot_histogram_comparison(output_dir, result, source, pset_id=None):
     data, fdata, bins = source.get_source_data()
 
     rvs, sizes = result.model.rvs_mix(result.params, size=fdata.shape[0],
                                       ret_sizes=True)
     rvs = fix_range(rvs)
 
-    n_components = (len(result.params) - 2) / 3 + 1
-    figname = os.path.join(output_dir, source.current.dir_base + '-cmp-%d.png'
-                           % n_components)
     fig = plot_rvs_comparison(fdata, rvs, sizes, bins,
                               neg_shift=source.neg_shift)
+
+    if pset_id is None:
+        name = source.current.dir_base + '-cmp.png'
+
+    else:
+        name = source.current.dir_base + '-cmp-%d.png' % pset_id
+
+    figname = os.path.join(output_dir, name)
     fig.savefig(figname)
