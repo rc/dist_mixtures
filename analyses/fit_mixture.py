@@ -228,12 +228,14 @@ def make_summary(logs):
 
         criteria = [item.fit_criteria for item in items]
         pset_ids = np.array(criteria).argsort(axis=0)
-        converged = np.take([item.converged for item in items], pset_ids)
 
+        converged = np.take([item.converged for item in items], pset_ids)
         probs = np.take([item.params[:, 2] for item in items], pset_ids,
                         axis=0)
-        summary[dir_base] = zip(pset_ids, converged, probs)
 
+        summary[dir_base] = Struct(sorted=zip(pset_ids, converged, probs),
+                                   criteria=criteria,
+                                   chisquare=[item.chisquare for item in items])
     return summary
 
 _summary_header = """
@@ -243,7 +245,16 @@ Summary of results
 Sorted parameter set ids for each criterion are given. Solver convergence is
 denoted with '*'. Component probabilities for each criterion are given as well.
 
-Row format: dir_base | llf | aic | bic || llf probs | aic probs | bic probs
+For each data directory, a header is printed and then rows sorted by criteria:
+
+- header:
+
+  dir_base | no. of parameter sets
+  id       | chisquare | p-value | llf | aic | bic values for each par. set
+
+- rows:
+
+  id(llf) | id(aic) | id(bic) | id(llf) probs | id(aic) probs | id(bic) probs
 """
 
 def print_summary(summary, logs):
@@ -254,13 +265,24 @@ def print_summary(summary, logs):
 
     dir_bases = [item.dir_base for item in logs[0].items]
     max_len = reduce(max, (len(ii) for ii in dir_bases), 0)
-    row = '%%%ds | %%2d%%1s | %%2d%%1s | %%2d%%1s || %%s' % max_len
+    head1 = '%%%ds | %%2d parameter sets' % max_len
+    head2 = '%%%dd | %%.2e | %%.2e | %%.6e | %%.6e | %%.6e' % max_len
+    row = '  %2d%1s | %2d%1s | %2d%1s | %s'
 
     star = {False : '', True : '*'}
     for idb, dir_base in enumerate(dir_bases):
         items = summary[dir_base]
 
-        for _item in items:
+        n_psets = len(logs)
+        print head1 % (dir_base, n_psets)
+        for ii in xrange(n_psets):
+            # Prevent printing of too small numbers.
+            chisquare = np.asarray(items.chisquare[ii])
+            aux = np.where(chisquare < 1e-99, 0.0, chisquare)
+            print head2 % ((ii,) + tuple(aux)
+                           + tuple(items.criteria[ii]))
+
+        for _item in items.sorted:
             item = zip(*_item)
             aux = []
             for ii in item:
@@ -272,7 +294,7 @@ def print_summary(summary, logs):
                 aux2.append((' '.join(['%.2f'] * len(probs))) % tuple(probs))
             aux2 = ' | '.join(aux2)
 
-            print row % ((dir_base,) + tuple(aux) + (aux2,))
+            print row % (tuple(aux) + (aux2,))
 
         if (idb + 1) < len(dir_bases):
             print '-' * 79
