@@ -144,8 +144,6 @@ if __name__ == '__main__':
 
         fit_criteria = [-res.llf, res.aic, res.bic]
 
-        log.write_row(dir_base, base_names, sparams, converged, fit_criteria)
-
         #goodness-of-fit chisquare test
 
         #TODO: we know bins of fdata
@@ -166,7 +164,11 @@ if __name__ == '__main__':
         from scipy import stats
         print 'chisquare test',
         fac = 1.   # try when we are unsure about sample size
-        print stats.chisquare(counts*fac, counts.sum() * fac * pdf_bins) #[:-1])
+        chisquare = stats.chisquare(counts*fac, counts.sum() * fac * pdf_bins)
+        print chisquare
+
+        log.write_row(dir_base, base_names, chisquare, sparams, converged,
+                      fit_criteria)
 
         #comparison with raw length distribution
         #plot not shifted to center
