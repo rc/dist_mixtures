@@ -266,6 +266,10 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
             retall=retall, **kwargs)
         result.params = normalize_params(result.params)
 
+        #this is a bit different from the way results are updated in discrete
+        #TODO: check this
+        result = MixtureResult(self, result)
+
         return result
 
     def pdf_mix(self, params, x=None, return_comp=False):
@@ -577,15 +581,11 @@ class VonMisesMixtureBinned(VonMisesMixture):
 
     def fit(self, start_params=None, method='bfgs', maxiter=500, full_output=1,
             disp=1, callback=None, retall=0, **kwargs):
-        result0 = super(VonMisesMixtureBinned, self).fit(
+        result = super(VonMisesMixtureBinned, self).fit(
                     start_params=start_params, method=method, maxiter=maxiter,
                     full_output=full_output, disp=disp, callback=callback,
                     retall=retall, **kwargs)
 
-        #this is a bit different from the way results are updated in discrete
-        #TODO: check this
-        result = MixtureResult(self, result0)
-        #result.__dict__.update(result0.__dict__)
         return result
 
 
