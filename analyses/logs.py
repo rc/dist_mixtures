@@ -39,7 +39,7 @@ class CSVLog(Struct):
     def write_header(self):
         fd = open(self.log_name, 'w')
 
-        header = ['directory', 'converged']
+        header = ['directory', 'converged', 'chisquare', 'chisquare p-value']
         for ii in range(self.n_components):
             header.extend(['mu%d' % ii, 'kappa%d' % ii, 'prob%d' % ii])
         header.extend(['nllf', 'aic', 'bic', 'number of files', 'filenames'])
@@ -49,16 +49,17 @@ class CSVLog(Struct):
 
         fd.close()
 
-    def write_row(self, dir_base, base_names, params, converged, fit_criteria):
+    def write_row(self, dir_base, base_names, chisquare, params, converged,
+                  fit_criteria):
         item = Struct(dir_base=dir_base, base_names=base_names,
-                      params=params, converged=converged,
+                      chisquare=chisquare, params=params, converged=converged,
                       fit_criteria=fit_criteria)
         self.items.append(item)
 
         fd = open(self.log_name, 'a')
 
         writer = csv.writer(fd)
-        writer.writerow([dir_base, int(converged)]
+        writer.writerow([dir_base, int(converged), chisquare[0], chisquare[1]]
                         + params.ravel().tolist() + fit_criteria
                         + [len(base_names), ', '.join(base_names)])
         fd.close()

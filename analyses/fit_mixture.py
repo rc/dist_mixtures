@@ -183,9 +183,10 @@ def log_results(log, result, source):
     converged = result.mle_retvals['converged']
 
     fit_criteria = [-result.llf, result.aic, result.bic]
+    chisquare = result.gof_chisquare()
 
     log.write_row(source.current.dir_base, source.current.base_names,
-                  sparams, converged, fit_criteria)
+                  chisquare, sparams, converged, fit_criteria)
 
 def print_results(psets, logs):
     """
