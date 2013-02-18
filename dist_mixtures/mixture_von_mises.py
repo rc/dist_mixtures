@@ -272,6 +272,26 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
 
         return result
 
+    def gof_chisquare(self, params, fac=1.):
+        """
+        Chisquare goodness-of-fit test.
+
+        Try ``fac`` when we are unsure about sample size.
+
+        This function is provided only for a consistent interface with
+        VonMisesMixtureBinned class.
+        """
+        if hasattr(self, 'source_data'):
+            xx_cdf = self.source_data.data[:, 0] + (2 * np.pi / 180) / 2
+            cdf = self.cdf_mix(params, xx_cdf)
+            #TODO: problems, cdf > 1, bin boundaries merge 1st and last ?
+            pdf_bins = np.diff(np.concatenate((cdf, [1 + cdf[0]])))
+            counts = self.source_data.counts
+            return stats.chisquare(counts*fac, counts.sum() * fac * pdf_bins)
+
+        else:
+            return -1, -1
+
     def pdf_mix(self, params, x=None, return_comp=False):
         '''pdf of a mixture of von mises distributions
         '''

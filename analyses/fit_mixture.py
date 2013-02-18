@@ -41,7 +41,8 @@ class DataSource(Struct):
 
             self.current = Struct(filenames=filenames, dir_base=dir_base,
                                   base_names=base_names)
-            self.source_data = Struct(data=data, fdata=fdata, bins=bins)
+            self.source_data = Struct(counts=counts,
+                                      data=data, fdata=fdata, bins=bins)
 
             yield self.source_data
 
@@ -162,6 +163,8 @@ def fit(source_data, start_params, model_class, solver_conf):
 
         bins_exog = np.linspace(-np.pi, np.pi, source_data.data.shape[0] + 1)
         mod = mvm.VonMisesMixtureBinned(source_data.data[:, 1], bins_exog)
+
+    mod.source_data = source_data
 
     res = mod.fit(start_params=start_params, method=solver_conf[0],
                   **solver_conf[1])
