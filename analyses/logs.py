@@ -63,3 +63,40 @@ class CSVLog(Struct):
                         + params.ravel().tolist() + fit_criteria
                         + [len(base_names), ', '.join(base_names)])
         fd.close()
+
+class AnglesCSVLog(Struct):
+    """
+    Log area angles.
+    """
+
+    def __init__(self, log_name):
+        self.log_name = log_name
+        self.reset()
+
+    def reset(self):
+        self.items = []
+
+    def write_header(self):
+        fd = open(self.log_name, 'w')
+
+        header = ['directory', 'x0', 'x0m', 'xm', 'x1m', 'x1', 'area1', 'area2',
+                  'number of files', 'filenames']
+
+        writer = csv.writer(fd)
+        writer.writerow(header)
+
+        fd.close()
+
+    def write_row(self, dir_base, base_names, area_angles):
+        x0, xm, x1, area1, area2 = area_angles
+        item = Struct(dir_base=dir_base, base_names=base_names,
+                      x0=x0, xm=xm, x1=x1, area1=area1, area2=area2)
+        self.items.append(item)
+
+        fd = open(self.log_name, 'a')
+
+        writer = csv.writer(fd)
+        writer.writerow([dir_base] + [x0, 0.5 * (x0 + xm), xm,
+                                      0.5 * (xm + x1), x1, area1, area2]
+                        + [len(base_names), ', '.join(base_names)])
+        fd.close()
