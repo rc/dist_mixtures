@@ -2,9 +2,25 @@ import numpy as np
 
 from analyses.transforms import transform_pi_deg
 
-def get_area_angles(data, neg_shift=False):
+def get_area_angles(data, mode='min', ishift=None):
     """
     Get equal area angles.
+
+    For 'min' mode:
+
+    First, the x-axis of the histogram is rolled so that the histogram minimum
+    is at the beginning/end of the x-axis. The histogram maximum is then
+    assumed to be somewhere around the middle of the x-axis.
+
+    For 'max' mode:
+
+    First, the x-axis of the histogram is rolled so that the histogram maximum
+    is in the middle of the x-axis. The histogram minimum is then assumed to be
+    somewhere around the beginning/end of the x-axis.
+
+    The two modes should give similar results for symmetric histograms.
+
+    Then:
 
     Assuming two main directions of fibres which are symmetric with respect to
     the angle of symmetry a_s and have the same probability 0.5 we obtain the
@@ -17,19 +33,35 @@ def get_area_angles(data, neg_shift=False):
     right half-areas, respectively. The mid-points of those intervals are taken
     as the directions of the assumed two fibre systems.
     """
-    aux = transform_pi_deg(data[:, 0], neg_shift=neg_shift)
-    ip = np.argsort(aux)
-    aux = aux[ip]
-    ddd = np.c_[aux[:, None], data[ip, 1:]]
+    ddd0 = data.copy()
+    ddd0[:, 0] = transform_pi_deg(ddd0[:, 0], neg_shift=0)
+
+    if ishift is None:
+        if mode == 'min':
+            ishift = np.argmin(ddd0[:, 1])
+
+        else:
+            ishift = np.argmax(ddd0[:, 1]) - int(float(data.shape[0]) / 2)
+
+    ddd = np.roll(ddd0, -ishift, axis=0)
+
+    # Make angle ascending.
+    for ii in xrange(1, ddd.shape[0]):
+        if ddd[ii, 0] < ddd[ii - 1, 0]:
+            ddd[ii, 0] += 180.0
 
     # Mirror the first data point.
-    dx = aux[1] - aux[0]
+    dx = ddd[1, 0] - ddd[0, 0]
     ddd = np.r_[ddd, [[ddd[-1, 0] + dx, ddd[0, 1]]]]
 
     xmin, xmax = -1000, 1000
     arh, xm = split_equal_areas(ddd, xmin, xmax)
     arh1, x0 = split_equal_areas(ddd, xmin, xm)
     arh2, x1 = split_equal_areas(ddd, xm, xmax)
+
+    x0 = x0 if x0 >= 0.0 else x0 + 180
+    xm = xm if xm >= 0.0 else xm + 180
+    x1 = x1 if x1 >= 0.0 else x1 + 180
 
     print x0, xm, x1
     print arh, arh1, arh2, arh1 - arh2, arh - (arh1 + arh2)
