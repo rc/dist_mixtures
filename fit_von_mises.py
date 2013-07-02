@@ -10,7 +10,7 @@ import dist_mixtures.mixture_von_mises as mvm
 import analyses.ioutils as io
 from analyses.parameter_sets import ParameterSets
 from analyses.fit_mixture import (analyze, print_results, make_summary,
-                                  print_summary, DataSource)
+                                  print_summary, print_angles, DataSource)
 
 usage = '%prog [options] pattern data_dir\n' + __doc__.rstrip()
 
@@ -115,11 +115,14 @@ def main():
                                group_last_level=True)
     source = DataSource(get_data, options.spread_data, options.neg_shift)
 
-    logs = analyze(source, psets, options)
+    logs, alog = analyze(source, psets, options)
     print_results(psets, logs)
 
     summary = make_summary(logs)
     print_summary(summary, logs)
+
+    if alog is not None:
+        print_angles(alog)
 
 if __name__ == '__main__':
     main()

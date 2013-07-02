@@ -80,17 +80,14 @@ def draw_areas(ax, x0, xm, x1, arh1, arh2):
 
     ax.text(xm, 0.25 * (h0 + h1), '%.2f' % xm)
 
-def plot_raw_data(output_dir, source, area_angles=False):
-    from analyses.area_angles import get_area_angles
-
+def plot_raw_data(output_dir, source, area_angles=None):
     data, fdata, bins = source.get_source_data()
 
     figname = os.path.join(output_dir, source.current.dir_base + '-data.png')
     fig = plot_data(data, fdata, bins, neg_shift=source.neg_shift)
 
-    if area_angles:
-        draw_areas(fig.axes[0],
-                   *get_area_angles(data, neg_shift=source.neg_shift))
+    if area_angles is not None:
+        draw_areas(fig.axes[0], *area_angles)
 
     fig.savefig(figname)
 

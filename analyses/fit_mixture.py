@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -59,13 +61,30 @@ def analyze(source, psets, options):
     logs : list of CSVLog
         The fitting information and results.
     """
-    from analyses.logs import create_logs
+    from analyses.logs import create_logs, AnglesCSVLog
 
     logs = create_logs(psets)
 
+    if options.area_angles:
+        alog = AnglesCSVLog(os.path.join(psets[0].output_dir,
+                                         'log_angles.csv'))
+        alog.write_header()
+
+    else:
+        alog = None
+
     for source_data in source():
-        pl.plot_raw_data(psets[0].output_dir, source,
-                         area_angles=options.area_angles)
+        if options.area_angles:
+            from analyses.area_angles import get_area_angles
+            data, _, _ = source.get_source_data()
+            area_angles = get_area_angles(data, mode='max')
+            alog.write_row(source.current.dir_base, source.current.base_names,
+                           area_angles)
+
+        else:
+            area_angles = None
+
+        pl.plot_raw_data(psets[0].output_dir, source, area_angles=area_angles)
 
         # Loop over parameter sets. Each has its own CSVLog.
         res = None
@@ -96,7 +115,7 @@ def analyze(source, psets, options):
             if options.show:
                 plt.show()
 
-    return logs
+    return logs, alog
 
 def get_start_params(n_components, params=None):
     start_params = np.zeros(n_components * 3 - 1)
@@ -298,3 +317,13 @@ def print_summary(summary, logs):
 
         if (idb + 1) < len(dir_bases):
             print '-' * 79
+
+_angles_header = """
+Area angles
+-----------
+dir_base, x0, xm, x1, area1, area2
+"""
+def print_angles(log):
+    print _angles_header
+    for item in log.items:
+        print item.dir_base, item.x0, item.xm, item.x1, item.area1, item.area2
