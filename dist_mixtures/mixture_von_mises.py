@@ -586,7 +586,11 @@ class VonMisesMixtureBinned(VonMisesMixture):
         params_ = normalize_params(params)
         cdf_bins = self.cdf_mix(params_, x=self.bins)
         pdf_bins = np.clip(np.diff(cdf_bins), 1e-20, 1)
-        return self.endog * np.log(pdf_bins)
+        val = self.endog * np.log(pdf_bins)
+        if not np.isfinite(val).all():
+            val.fill(-1e10)
+
+        return val
 
     def pmf_bins(self, params):
         '''probability mass function of binned data
