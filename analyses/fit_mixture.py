@@ -24,8 +24,12 @@ class DataSource(Struct):
             print '======================================================'
             print 'directory base:',  dir_base
 
-            data = io.load_data(filenames, transform=tr.transform_2pi)
+            data = io.load_data(filenames)
+            print 'angles range:', data[:, 0].min(), data[:, 0].max()
 
+            data = tr.fix_increasing(tr.fix_range(tr.transform_2pi(data)))
+
+            print 'transformed angles range:', data[0, 0], data[-1, 0]
             print 'data range:', data[:, 1].min(), data[:, 1].max()
 
             # Simulate the "random process" the histogram was done from.
