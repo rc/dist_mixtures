@@ -70,6 +70,16 @@ def fix_range(data):
 
     return data
 
+def fix_increasing(data):
+    """
+    Sort `data` so that values in the first column are non-decreasing.
+    """
+    data = np.asarray(data)
+    ii = np.argsort(data[:, 0])
+    data = data[ii]
+
+    return data
+
 def get_counts_from_lengths(lengths):
     """
     Get simulated counts corresponding to lengths.
