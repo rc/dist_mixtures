@@ -62,6 +62,8 @@ def load_data(filenames, transform=None):
     datas = []
     for filename in filenames:
         data = np.genfromtxt(filename)
+        if not np.isfinite(data[0, 0]): # First line is comment.
+            data = data[1:].copy()
         data[:, 0] = transform(data[:, 0])
         datas.append(data)
 
