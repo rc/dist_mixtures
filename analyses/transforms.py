@@ -3,11 +3,23 @@ Various functions for data transformations.
 """
 import numpy as np
 
+def _get_angles(data):
+    if data.ndim == 2:
+        angles = data[:, 0] # View!
+
+    else:
+        angles = data
+
+    return angles
+
 def transform_2pi(data):
     data = np.asarray(data)
+    data = data.copy()
 
-    out = 2 * data * np.pi / 180.0
-    return out
+    angles = _get_angles(data)
+    angles[:, ...] = 2 * angles * np.pi / 180.0
+
+    return data
 
 def transform_pi_deg(data, neg_shift=False):
     '''transform radial on (-pi, pi) to axial degrees
@@ -53,12 +65,8 @@ def fix_range(data):
     #which maps to half open interval [-pi, pi)
     data = np.asarray(data)
     data = data.copy()
-    if data.ndim == 2:
-        angles = data[:, 0] # View!
 
-    else:
-        angles = data
-
+    angles = _get_angles(data)
     while 1:
         ii = np.where(angles < -np.pi)[0]
         angles[ii] += 2 * np.pi
@@ -72,10 +80,12 @@ def fix_range(data):
 
 def fix_increasing(data):
     """
-    Sort `data` so that values in the first column are non-decreasing.
+    Sort `data` inplace so that values in the first column are non-decreasing.
     """
     data = np.asarray(data)
-    ii = np.argsort(data[:, 0])
+    angles = _get_angles(data)
+
+    ii = np.argsort(angles)
     data = data[ii]
 
     return data
