@@ -95,7 +95,7 @@ def plot_estimated_dist(output_dir, result, source, pset_id=None):
     data, fdata, bins = source.get_source_data()
 
     xtr = lambda x: transform_pi_deg(x, neg_shift=source.neg_shift)
-    rbins = transform_2pi(bins) - np.pi
+    rbins = transform_2pi(bins) - np.pi * (source.neg_shift == True)
     fig = result.model.plot_dist(result.params, xtransform=xtr, bins=rbins,
                                  data=fdata)
     fig.axes[0].set_title('Estimated distribution')
