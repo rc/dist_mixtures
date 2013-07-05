@@ -86,7 +86,7 @@ def get_counts_from_lengths(lengths):
     """
     lengths = np.asarray(lengths)
 
-    lo = lengths.min()
+    lo = lengths[lengths > 0.0].min()
     counts = ((10.0 / lo) * lengths).astype(np.int32)
 
     return counts
