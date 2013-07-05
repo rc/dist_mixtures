@@ -37,6 +37,8 @@ def transform_pi_deg(data, neg_shift=False):
 def fix_range(data):
     '''transform or wrap data into [-pi, pi]
 
+    If `data` is a 2D array, the angles are assumed to be in the first column.
+
     Parameters
     ----------
     data : array_like
@@ -50,15 +52,20 @@ def fix_range(data):
     #almost same as np.remainder(data+np.pi, 2*np.pi) - np.pi
     #which maps to half open interval [-pi, pi)
     data = np.asarray(data)
-
     data = data.copy()
+    if data.ndim == 2:
+        angles = data[:, 0] # View!
+
+    else:
+        angles = data
+
     while 1:
-        ii = np.where(data < -np.pi)[0]
-        data[ii] += 2 * np.pi
+        ii = np.where(angles < -np.pi)[0]
+        angles[ii] += 2 * np.pi
         if not len(ii): break
     while 1:
-        ii = np.where(data > np.pi)[0]
-        data[ii] -= 2 * np.pi
+        ii = np.where(angles > np.pi)[0]
+        angles[ii] -= 2 * np.pi
         if not len(ii): break
 
     return data
