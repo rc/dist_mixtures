@@ -4,6 +4,7 @@ Logging.
 import csv
 import os
 
+import numpy as np
 from dist_mixtures.base import Struct
 
 def create_logs(psets):
@@ -83,11 +84,12 @@ class CSVLog(Struct):
         """
         n_components = int(row[7])
         off = 8 + 3 * n_components
+        params = np.array(map(float, row[8:off])).reshape((n_components, 3))
         item = Struct(dir_base=row[0], converged=int(row[1]),
                       fit_criteria=map(float, row[2:5]),
                       chisquare=map(float, row[5:7]),
                       n_components=n_components,
-                      params=map(float, row[8:off]),
+                      params=params,
                       base_names=[ii.strip()
                                   for ii in row[off + 1].split(',')])
         assert(len(item.base_names) == int(row[off]))
