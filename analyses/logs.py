@@ -37,6 +37,8 @@ class CSVLog(Struct):
             obj.header = reader.next()
             obj.items = [obj.parse_row(row) for row in reader]
 
+        obj.setup_items_dict()
+
         return obj
 
     def __init__(self, log_name, n_components):
@@ -95,6 +97,19 @@ class CSVLog(Struct):
         assert(len(item.base_names) == int(row[off]))
 
         return item
+
+    def setup_items_dict(self):
+        for item in self.items:
+            item.vals = {'nllf' : item.fit_criteria[0],
+                         'aic' : item.fit_criteria[1],
+                         'bic' : item.fit_criteria[2],
+                         'chisquare' : item.chisquare[0],
+                         'chisquare p-value' : item.chisquare[1],
+                         'n_components' : item.n_components,
+                         'params' : item.params}
+
+    def get(self, key):
+        return [item.vals.get(key) for item in self.items]
 
 class AnglesCSVLog(Struct):
     """
