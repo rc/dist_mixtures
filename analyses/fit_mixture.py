@@ -12,8 +12,11 @@ import analyses.plots as pl
 
 class DataSource(Struct):
 
-    def __init__(self, get_filenames, spread_data, neg_shift=True):
+    def __init__(self, get_filenames, n_merge_bins=None, plot_bins_step=4,
+                 spread_data=False, neg_shift=True):
         Struct.__init__(self, get_filenames=get_filenames,
+                        n_merge_bins=n_merge_bins,
+                        plot_bins_step=plot_bins_step,
                         spread_data=spread_data, neg_shift=neg_shift)
         self.current = Struct(filenames=None, dir_base=None, base_names=None)
         self.source_data = Struct(data=None, fdata=None, bins=None)
@@ -25,6 +28,8 @@ class DataSource(Struct):
             print 'directory base:',  dir_base
 
             data = io.load_data(filenames)
+            if self.n_merge_bins is not None:
+                data = tr.merge_bins(data, self.n_merge_bins)
             print 'angles range:', data[:, 0].min(), data[:, 0].max()
 
             data = tr.fix_increasing(tr.fix_range(tr.transform_2pi(data)))
@@ -43,7 +48,7 @@ class DataSource(Struct):
                                                 neg_shift=self.neg_shift))
             dd = ddata[1] - ddata[0]
             all_bins = np.r_[ddata - 1e-8, ddata[-1] + dd]
-            bins = all_bins[::4]
+            bins = all_bins[::self.plot_bins_step]
 
             self.current = Struct(filenames=filenames, dir_base=dir_base,
                                   base_names=base_names)

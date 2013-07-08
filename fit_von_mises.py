@@ -16,6 +16,8 @@ usage = '%prog [options] pattern data_dir\n' + __doc__.rstrip()
 
 defaults = {
     'n_components' : 2,
+    'n_merge_bins' : None,
+    'plot_bins_step' : 4,
     'output_dir' : 'output',
 }
 
@@ -34,7 +36,13 @@ help = {
     ' to kappa0, mu0, kappa1, mu1 respectively. The location parameter'
     ' mu should be given in degrees in [-90, 90[.',
     'dir_pattern' :
-    'pattern that subdrectories should match [default: %default]',
+    'pattern that subdirectories should match [default: %default]',
+    'n_merge_bins' :
+    'number of consecutive bins in data to merge [default: %s]' \
+    % defaults['n_merge_bins'],
+    'plot_bins_step' :
+    'step to choose bins from all bins for histogram plots [default: %s]' \
+    % defaults['plot_bins_step'],
     'spread_data' :
     'spread raw data using their counts instead of just repeating them',
     'area_angles' :
@@ -63,6 +71,12 @@ def get_options_parser():
     parser.add_option('-d', '--dir-pattern', metavar='pattern',
                       action='store', dest='dir_pattern',
                       default='*', help=help['dir_pattern'])
+    parser.add_option('-m', '--merge-bins', type=int, metavar='positive_int',
+                      action='store', dest='n_merge_bins',
+                      default=None, help=help['n_merge_bins'])
+    parser.add_option('', '--plot-bins-step', type=int, metavar='positive_int',
+                      action='store', dest='plot_bins_step',
+                      default=None, help=help['plot_bins_step'])
     parser.add_option('', '--spread-data',
                       action='store_true', dest='spread_data',
                       default=False, help=help['spread_data'])
@@ -113,7 +127,8 @@ def main():
     get_data = io.locate_files(pattern, data_dir,
                                dir_pattern=options.dir_pattern,
                                group_last_level=True)
-    source = DataSource(get_data, options.spread_data, options.neg_shift)
+    source = DataSource(get_data, options.n_merge_bins, options.plot_bins_step,
+                        options.spread_data, options.neg_shift)
 
     logs, alog = analyze(source, psets, options)
     print_results(psets, logs)
