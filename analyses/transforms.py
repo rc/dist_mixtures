@@ -125,3 +125,19 @@ def spread_by_counts(data, counts, trivial=False):
             ii += count
 
     return out
+
+def merge_bins(data, num):
+    """
+    Merge `num` neighbouring bins. `data` is interpreted as histogram.
+
+    Notes
+    -----
+    `num` has to divide `data.shape[0]`.
+    """
+    if data.shape[0] % num:
+        raise ValueError('`num` must divide number of bins!')
+
+    n_new = data.shape[0] / num
+    data = data.reshape((n_new, num, 2))
+    new_data = np.mean(data, axis=1)
+    return new_data
