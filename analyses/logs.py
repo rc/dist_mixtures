@@ -27,6 +27,16 @@ class CSVLog(Struct):
     """
     Log von Mises mixture fitting results.
     """
+    @classmethod
+    def from_file(cls, filename):
+        obj = cls(filename, -1)
+
+        with open(filename, 'rb') as fd:
+            reader = csv.reader(fd)
+            obj.header = reader.next()
+            obj.items = [obj.parse_row(row) for row in reader]
+
+        return obj
 
     def __init__(self, log_name, n_components):
         self.log_name = log_name
@@ -39,10 +49,11 @@ class CSVLog(Struct):
     def write_header(self):
         fd = open(self.log_name, 'w')
 
-        header = ['directory', 'converged', 'chisquare', 'chisquare p-value']
+        header = ['directory', 'converged', 'nllf', 'aic', 'bic',
+                  'chisquare', 'chisquare p-value', 'n_components']
         for ii in range(self.n_components):
             header.extend(['mu%d' % ii, 'kappa%d' % ii, 'prob%d' % ii])
-        header.extend(['nllf', 'aic', 'bic', 'number of files', 'filenames'])
+        header.extend(['number of files', 'filenames'])
 
         writer = csv.writer(fd)
         writer.writerow(header)
@@ -51,18 +62,37 @@ class CSVLog(Struct):
 
     def write_row(self, dir_base, base_names, chisquare, params, converged,
                   fit_criteria):
+        n_components = params.shape[0]
         item = Struct(dir_base=dir_base, base_names=base_names,
                       chisquare=chisquare, params=params, converged=converged,
-                      fit_criteria=fit_criteria)
+                      n_components=n_components, fit_criteria=fit_criteria)
         self.items.append(item)
 
         fd = open(self.log_name, 'a')
 
         writer = csv.writer(fd)
-        writer.writerow([dir_base, int(converged), chisquare[0], chisquare[1]]
-                        + params.ravel().tolist() + fit_criteria
-                        + [len(base_names), ', '.join(base_names)])
+        writer.writerow([dir_base, int(converged)] + fit_criteria +
+                        [chisquare[0], chisquare[1], n_components]
+                        + params.ravel().tolist()
+                        + [len(base_names) , ', '.join(base_names)])
         fd.close()
+
+    def parse_row(self, row):
+        """
+        Parse single hitogram row.
+        """
+        n_components = int(row[7])
+        off = 8 + 3 * n_components
+        item = Struct(dir_base=row[0], converged=int(row[1]),
+                      fit_criteria=map(float, row[2:5]),
+                      chisquare=map(float, row[5:7]),
+                      n_components=n_components,
+                      params=map(float, row[8:off]),
+                      base_names=[ii.strip()
+                                  for ii in row[off + 1].split(',')])
+        assert(len(item.base_names) == int(row[off]))
+
+        return item
 
 class AnglesCSVLog(Struct):
     """
