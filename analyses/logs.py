@@ -38,6 +38,7 @@ class CSVLog(Struct):
             obj.items = [obj.parse_row(row) for row in reader]
 
         obj.setup_items_dict()
+        obj.n_components = obj.items[0].n_components
 
         return obj
 
