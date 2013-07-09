@@ -108,7 +108,7 @@ class CSVLog(Struct):
                          'n_components' : item.n_components,
                          'params' : item.params}
 
-    def get(self, key):
+    def get_value(self, key):
         return [item.vals.get(key) for item in self.items]
 
 class AnglesCSVLog(Struct):

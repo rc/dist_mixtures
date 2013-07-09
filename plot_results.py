@@ -29,7 +29,7 @@ def plot_fit_info(fig_num, datas, key):
     dys = []
     labels = []
     for data in datas:
-        dy = data.get(key)
+        dy = data.get_value(key)
         dys.append(dy)
         labels.append('%d' % data.items[0].n_components)
     dys = np.asarray(dys)
