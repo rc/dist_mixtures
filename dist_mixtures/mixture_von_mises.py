@@ -292,7 +292,7 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
         else:
             return -1, -1
 
-    def pdf_mix(self, params, x=None, return_comp=False):
+    def pdf_mix(self, params, x=None, return_comp=False, sort=False):
         '''pdf of a mixture of von mises distributions
         '''
 
@@ -305,7 +305,14 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
         pdf_ = np.zeros(x.shape)
         if return_comp:
             pdf_d = []
-        for ii in range(k_dist):
+
+        if sort:
+            iis = np.argsort(probs)[::-1] # Descending.
+
+        else:
+            iis = np.arange(k_dist)
+
+        for ii in iis:
             pdf_i = probs[ii] * pdf_vn(x, params[ii*2], params[ii*2+1])
             pdf_ += pdf_i
             if return_comp:
@@ -476,16 +483,16 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
 
         fig = plt.figure()
 
-        pdf_m, pdf_d = self.pdf_mix(params, x0, return_comp=True)
-        plt.plot(x0t, pdf_m[ip], lw=2, label='mixture')
+        pdf_m, pdf_d = self.pdf_mix(params, x0, return_comp=True, sort=True)
+        plt.plot(x0t, pdf_m[ip], lw=2, color='k', label='mixture')
+
+        for ii, pdf_i in enumerate(pdf_d):
+            plt.plot(x0t, pdf_i[ip], lw=2, label='dist%d' % ii)
 
         if plot_kde:
             kde = GaussianKDE(data, (0, 0.5))
             pdf_kde = kde(x0)
             plt.plot(x0t, pdf_kde[ip], lw=2, label='kde')
-
-        for ii, pdf_i in enumerate(pdf_d):
-            plt.plot(x0t, pdf_i[ip], lw=2, label='dist%d' % ii)
 
         _, _, patches = plt.hist(data, bins=bins, normed=True,
                                  alpha=0.2, color='b')
