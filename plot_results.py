@@ -64,7 +64,7 @@ def plot_fit_info(fig_num, datas, key):
 
     return fig
 
-def plot_params(fig_num, datas, n_components, cut_prob=0.1):
+def plot_params(fig_num, datas, n_components, cut_prob=0.1, sort_x=False):
 
     for data in datas:
         if data.n_components == n_components:
@@ -83,18 +83,24 @@ def plot_params(fig_num, datas, n_components, cut_prob=0.1):
     sparams = np.sort(aux, order=['f2'], axis=1).view(np.float64)
     sparams = sparams[:, ::-1, :]
 
+    if sort_x:
+        ix = sparams[:, 0, -1].argsort()[::-1]
+
+    else:
+        ix = np.arange(sparams.shape[0])
+
     fig, axs = plt.subplots(3, 1, sharex=True, num=fig_num)
 
     dx = np.arange(sparams.shape[0])
 
     colors = ['b', 'g', 'r', 'c', 'm']
     for ic in range(sparams.shape[1]):
-        ms = 200 * np.sqrt(sparams[:, ic, 2])
-        axs[0].scatter(dx, sparams[:, ic, 0], ms, c=colors[ic],
+        ms = 200 * np.sqrt(sparams[ix, ic, 2])
+        axs[0].scatter(dx, sparams[ix, ic, 0], ms, c=colors[ic],
                        marker='o', alpha=0.8)
-        axs[1].scatter(dx, sparams[:, ic, 1], ms, c=colors[ic],
+        axs[1].scatter(dx, sparams[ix, ic, 1], ms, c=colors[ic],
                        marker='o', alpha=0.8)
-        axs[2].scatter(dx, sparams[:, ic, 2], ms, c=colors[ic],
+        axs[2].scatter(dx, sparams[ix, ic, 2], ms, c=colors[ic],
                        marker='o', alpha=0.8)
 
     axs[0].grid(axis='x')
@@ -107,7 +113,7 @@ def plot_params(fig_num, datas, n_components, cut_prob=0.1):
 
     plt.xticks(rotation=70)
     axs[2].set_xticks(dx)
-    axs[2].set_xticklabels([ii.dir_base for ii in datas[0].items])
+    axs[2].set_xticklabels([datas[0].items[ii].dir_base for ii in ix])
     axs[2].set_xlim((-1, sparams.shape[0]))
     axs[2].set_ylim((-0.05, 1.05))
     axs[2].hlines([cut_prob], -1, sparams.shape[0])
@@ -120,7 +126,7 @@ suffix = '.pdf'
 
 for data in datas:
     nc = data.n_components
-    fig = plot_params(10 + nc, datas, nc)
+    fig = plot_params(10 + nc, datas, nc, sort_x=True)
     fig.savefig(op.join(dirname, 'params_%d' % nc + suffix))
 
 fig = plot_fit_info(1, datas, 'nllf')
