@@ -24,6 +24,23 @@ def create_logs(psets):
 
     return logs
 
+def read_logs(dirname, pattern):
+    """
+    Read all csv logs in directory `dirname` with file names given by
+    `pattern`.
+    """
+    from glob import glob
+
+    filenames = sorted(glob(os.path.join(dirname, pattern)))
+
+    logs = []
+    for filename in filenames:
+        print filename
+        log = CSVLog.from_file(filename)
+        logs.append(log)
+
+    return logs
+
 class CSVLog(Struct):
     """
     Log von Mises mixture fitting results.
