@@ -129,6 +129,18 @@ class CSVLog(Struct):
     def get_value(self, key):
         return [item.vals.get(key) for item in self.items]
 
+    def filter_weak_components(self, weak_prob=0.1):
+        """
+        For each item return number of components corrected by ignoring
+        components with probability less then `weak_prob`.
+        """
+        ncs = []
+        for item in self.items:
+            iw = np.where(item.params[:, 2] < weak_prob)[0]
+            ncs.append(item.n_components - iw.shape[0])
+
+        return np.array(ncs)
+
 class AnglesCSVLog(Struct):
     """
     Log area angles.
