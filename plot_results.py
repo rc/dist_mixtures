@@ -1,23 +1,11 @@
 #!/usr/bin/env python
 import sys
 import os.path as op
-from glob import glob
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from analyses.logs import CSVLog
-
-plt.close('all')
-
-dirname = sys.argv[1]
-filenames = sorted(glob(op.join(dirname, 'log_*.csv')))
-
-datas = []
-for filename in filenames:
-    print filename
-    data = CSVLog.from_file(filename)
-    datas.append(data)
+from analyses.logs import read_logs
 
 def get_fig_size(nx):
     fig_size = (np.clip(int(8 * nx / 20.), 8, 32), 6)
@@ -25,8 +13,8 @@ def get_fig_size(nx):
     de = 0.1 / (fig_size[0] / 8.0)
     return fig_size, de
 
-def plot_fit_info(fig_num, datas, key):
-    fig_size, de = get_fig_size(len(datas[0].items))
+def plot_fit_info(fig_num, logs, key):
+    fig_size, de = get_fig_size(len(logs[0].items))
     fig = plt.figure(fig_num, fig_size)
     plt.clf()
     plt.subplots_adjust(bottom=0.12, left=2*de, right=1.0-de)
@@ -34,10 +22,10 @@ def plot_fit_info(fig_num, datas, key):
 
     dys = []
     labels = []
-    for data in datas:
-        dy = data.get_value(key)
+    for log in logs:
+        dy = log.get_value(key)
         dys.append(dy)
-        labels.append('%d' % data.n_components)
+        labels.append('%d' % log.n_components)
     dys = np.asarray(dys)
 
     dx = np.arange(dys.shape[1])
@@ -56,7 +44,7 @@ def plot_fit_info(fig_num, datas, key):
 
     plt.xticks(rotation=70)
     ax.set_xticks(dx)
-    ax.set_xticklabels([ii.dir_base for ii in datas[0].items])
+    ax.set_xticklabels([ii.dir_base for ii in logs[0].items])
     ax.set_xlim((-1, dx[-1] + 1))
     ax.set_ylabel(r'$log_{10}(%s - min_{N_c}(%s) + 0.1)$' % (key, key))
     ax.grid(axis='x')
@@ -64,16 +52,16 @@ def plot_fit_info(fig_num, datas, key):
 
     return fig
 
-def plot_params(fig_num, datas, n_components, cut_prob=0.1, sort_x=False):
+def plot_params(fig_num, logs, n_components, cut_prob=0.1, sort_x=False):
 
-    for data in datas:
-        if data.n_components == n_components:
+    for log in logs:
+        if log.n_components == n_components:
             break
 
     else:
         raise ValueError('no log with %d components!' % n_components)
 
-    params = np.array(data.get_value('params'))
+    params = np.array(log.get_value('params'))
 
     fig_size, de = get_fig_size(params.shape[0])
     fig = plt.figure(fig_num, fig_size)
@@ -113,7 +101,7 @@ def plot_params(fig_num, datas, n_components, cut_prob=0.1, sort_x=False):
 
     plt.xticks(rotation=70)
     axs[2].set_xticks(dx)
-    axs[2].set_xticklabels([datas[0].items[ii].dir_base for ii in ix])
+    axs[2].set_xticklabels([logs[0].items[ii].dir_base for ii in ix])
     axs[2].set_xlim((-1, sparams.shape[0]))
     axs[2].set_ylim((-0.05, 1.05))
     axs[2].hlines([cut_prob], -1, sparams.shape[0])
@@ -124,20 +112,24 @@ def plot_params(fig_num, datas, n_components, cut_prob=0.1, sort_x=False):
 
 suffix = '.pdf'
 
-for data in datas:
-    nc = data.n_components
-    fig = plot_params(10 + nc, datas, nc, sort_x=True)
+dirname = sys.argv[1]
+logs = read_logs(dirname, 'log_*.csv')
+
+plt.close('all')
+for log in logs:
+    nc = log.n_components
+    fig = plot_params(10 + nc, logs, nc, sort_x=True)
     fig.savefig(op.join(dirname, 'params_%d' % nc + suffix))
 
-fig = plot_fit_info(1, datas, 'nllf')
+fig = plot_fit_info(1, logs, 'nllf')
 fig.savefig(op.join(dirname, 'nllf' + suffix))
-fig = plot_fit_info(2, datas, 'aic')
+fig = plot_fit_info(2, logs, 'aic')
 fig.savefig(op.join(dirname, 'aic' + suffix))
-fig = plot_fit_info(3, datas, 'bic')
+fig = plot_fit_info(3, logs, 'bic')
 fig.savefig(op.join(dirname, 'bic' + suffix))
-fig = plot_fit_info(4, datas, 'chisquare')
+fig = plot_fit_info(4, logs, 'chisquare')
 fig.savefig(op.join(dirname, 'chisquare' + suffix))
-fig = plot_fit_info(5, datas, 'chisquare p-value')
+fig = plot_fit_info(5, logs, 'chisquare p-value')
 fig.savefig(op.join(dirname, 'chisquare p-value' + suffix))
 
 plt.show()
