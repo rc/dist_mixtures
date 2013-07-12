@@ -132,14 +132,37 @@ class CSVLog(Struct):
     def filter_weak_components(self, weak_prob=0.1):
         """
         For each item return number of components corrected by ignoring
-        components with probability less then `weak_prob`.
+        components with probability less then `weak_prob`. Return also indices
+        of the masked components.
         """
         ncs = []
+        iws = []
         for item in self.items:
             iw = np.where(item.params[:, 2] < weak_prob)[0]
+            iws.append(iw)
             ncs.append(item.n_components - iw.shape[0])
 
-        return np.array(ncs)
+        return np.array(ncs), iws
+
+    def filter_background(self, background_kappa=0.75, iws=None):
+        """
+        For each item return number of components corrected by ignoring
+        components with kappa (shape) less then `background_kappa`. Return also
+        indices of the masked components. If `iws` is not None, those
+        components are added to the mask (to be used with
+        :func:`CSVLog.filter_weak_components()`.
+        """
+        ncs = []
+        ibs = []
+        for ii, item in enumerate(self.items):
+            ib = np.where(item.params[:, 1] < background_kappa)[0]
+            if iws is not None:
+                iw = iws[ii]
+                ib = np.union1d(ib, iw)
+            ibs.append(ib)
+            ncs.append(item.n_components - ib.shape[0])
+
+        return np.array(ncs), ibs
 
 class AnglesCSVLog(Struct):
     """
