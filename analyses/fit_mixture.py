@@ -267,7 +267,7 @@ def make_summary(logs):
                         axis=0)
 
         summary[dir_base] = Struct(sorted=zip(pset_ids, converged, probs),
-                                   criteria=criteria,
+                                   criteria=criteria, pset_ids=pset_ids,
                                    chisquare=[item.chisquare for item in items])
     return summary
 
