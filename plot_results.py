@@ -141,12 +141,14 @@ if len(args) == 2:
 
 else:
     dir_bases = None
+    group = None
 
 plt.close('all')
 for log in logs:
     nc = log.n_components
     fig = plot_params(10 + nc, logs, nc, gmap, dir_bases=dir_bases, sort_x=True)
-    fig.savefig(op.join(dirname, 'params_%d' % nc + suffix))
+    esuffix = suffix if group is None else '_%s' % group + suffix
+    fig.savefig(op.join(dirname, 'params_%d' % nc + esuffix))
 
 fig = plot_fit_info(1, logs, 'nllf')
 fig.savefig(op.join(dirname, 'nllf' + suffix))
