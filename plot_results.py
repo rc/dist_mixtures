@@ -69,8 +69,12 @@ def plot_params(fig_num, logs, n_components, gmap, dir_bases=None,
     sparams = np.sort(aux, order=['f2'], axis=1).view(np.float64)
     sparams = sparams[:, ::-1, :]
 
+    used_dir_bases = [ii.dir_base for ii in logs[0].items]
     if dir_bases is None:
-        dir_bases = [ii.dir_base for ii in logs[0].items]
+        dir_bases = used_dir_bases
+
+    else:
+        dir_bases = list(set(dir_bases).intersection(used_dir_bases))
 
     ix = np.array([ii for ii in range(sparams.shape[0])
                    if logs[0].items[ii].dir_base in dir_bases])
