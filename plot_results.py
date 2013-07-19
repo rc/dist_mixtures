@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from analyses.logs import read_logs
+from groups import read_group_info, map_group_names, get_datasets_of_group
 
 def get_fig_size(nx):
     fig_size = (np.clip(int(8 * nx / 20.), 8, 32), 6)
@@ -52,7 +53,8 @@ def plot_fit_info(fig_num, logs, key):
 
     return fig
 
-def plot_params(fig_num, logs, n_components, cut_prob=0.1, sort_x=False):
+def plot_params(fig_num, logs, n_components, gmap, dir_bases=None,
+                cut_prob=0.1, sort_x=False, select_x=None):
 
     for log in logs:
         if log.n_components == n_components:
@@ -63,23 +65,27 @@ def plot_params(fig_num, logs, n_components, cut_prob=0.1, sort_x=False):
 
     params = np.array(log.get_value('params'))
 
-    fig_size, de = get_fig_size(params.shape[0])
-    fig = plt.figure(fig_num, fig_size)
-    plt.clf()
-
     aux = params.view('f8,f8,f8')
     sparams = np.sort(aux, order=['f2'], axis=1).view(np.float64)
     sparams = sparams[:, ::-1, :]
 
-    if sort_x:
-        ix = sparams[:, 0, -1].argsort()[::-1]
+    if dir_bases is None:
+        dir_bases = [ii.dir_base for ii in logs[0].items]
 
-    else:
-        ix = np.arange(sparams.shape[0])
+    ix = np.array([ii for ii in range(sparams.shape[0])
+                   if logs[0].items[ii].dir_base in dir_bases])
+
+    fig_size, de = get_fig_size(ix.shape[0])
+    fig = plt.figure(fig_num, fig_size)
+    plt.clf()
+
+    if sort_x:
+        ii = sparams[ix, 0, -1].argsort()[::-1]
+        ix = ix[ii]
 
     fig, axs = plt.subplots(3, 1, sharex=True, num=fig_num)
 
-    dx = np.arange(sparams.shape[0])
+    dx = np.arange(ix.shape[0])
 
     colors = ['b', 'g', 'r', 'c', 'm']
     for ic in range(sparams.shape[1]):
@@ -97,28 +103,49 @@ def plot_params(fig_num, logs, n_components, cut_prob=0.1, sort_x=False):
 
     axs[0].set_ylim((0, 180))
 
+    for ii, dir_base in enumerate(dir_bases):
+        axs[0].text(dx[ii] - 0.5, 185, '%s%d' % gmap[dir_base])
+
     axs[1].set_yscale('log')
 
     plt.xticks(rotation=70)
     axs[2].set_xticks(dx)
-    axs[2].set_xticklabels([logs[0].items[ii].dir_base for ii in ix])
-    axs[2].set_xlim((-1, sparams.shape[0]))
+    axs[2].set_xticklabels(dir_bases)
+    axs[2].set_xlim((-1, ix.shape[0]))
     axs[2].set_ylim((-0.05, 1.05))
     axs[2].hlines([cut_prob], -1, sparams.shape[0])
 
-    plt.subplots_adjust(bottom=0.12, left=de, right=1.0-de)
+    plt.subplots_adjust(bottom=0.12, top=0.95, left=de, right=1.0-de)
 
     return fig
 
 suffix = '.pdf'
 
-dirname = sys.argv[1]
+args = sys.argv[1:]
+
+dirname = args[0]
 logs = read_logs(dirname, 'log_*.csv')
+
+group_info = read_group_info()
+gmap = map_group_names(group_info)
+
+if len(args) == 2:
+    group = args[1]
+    try:
+        group = int(args[1])
+
+    except ValueError:
+        pass
+
+    dir_bases = get_datasets_of_group(group_info, group)
+
+else:
+    dir_bases = None
 
 plt.close('all')
 for log in logs:
     nc = log.n_components
-    fig = plot_params(10 + nc, logs, nc, sort_x=True)
+    fig = plot_params(10 + nc, logs, nc, gmap, dir_bases=dir_bases, sort_x=True)
     fig.savefig(op.join(dirname, 'params_%d' % nc + suffix))
 
 fig = plot_fit_info(1, logs, 'nllf')
