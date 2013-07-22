@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
+import statsmodels.stats.gof as gof
 
 from dist_mixtures.base import Struct
 import dist_mixtures.mixture_von_mises as mvm
@@ -221,8 +222,24 @@ def log_results(log, result, source):
     fit_criteria = [-result.llf, result.aic, result.bic]
     chisquare = result.gof_chisquare()
 
+    # Chisquare test with effect size.
+    alpha = 0.05 # Significance level.
+    data = source.source_data.data
+    n_obs = data[:, 1].sum()
+    rad_diff = data[1, 0] - data[0, 0]
+
+    pdf = result.model.pdf_mix(result.params, data[:, 0])
+    probs = pdf * rad_diff * n_obs
+    effect_size = gof.chisquare_effectsize(data[:, 1], probs)
+    chi2 = gof.chisquare(data[:, 1], probs, value=effect_size)
+    power = gof.chisquare_power(effect_size, n_obs,
+                                data.shape[0], alpha=alpha)
+
+    chisquare_all = list(chisquare) + [n_obs, effect_size] \
+                    + list(chi2) + [power]
+
     log.write_row(source.current.dir_base, source.current.base_names,
-                  chisquare, sparams, converged, fit_criteria)
+                  chisquare_all, sparams, converged, fit_criteria)
 
 def print_results(psets, logs):
     """

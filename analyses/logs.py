@@ -71,7 +71,9 @@ class CSVLog(Struct):
         fd = open(self.log_name, 'w')
 
         header = ['directory', 'converged', 'nllf', 'aic', 'bic',
-                  'chisquare', 'chisquare p-value', 'n_components']
+                  'chisquare', 'chisquare p-value', 'n_observations',
+                  'effect size', 'chisquare(e)', 'chisquare(e) p-value',
+                  'chisquare(e) power', 'n_components']
         for ii in range(self.n_components):
             header.extend(['mu%d' % ii, 'kappa%d' % ii, 'prob%d' % ii])
         header.extend(['number of files', 'filenames'])
@@ -93,7 +95,7 @@ class CSVLog(Struct):
 
         writer = csv.writer(fd)
         writer.writerow([dir_base, int(converged)] + fit_criteria +
-                        [chisquare[0], chisquare[1], n_components]
+                        chisquare + [n_components]
                         + params.ravel().tolist()
                         + [len(base_names) , ', '.join(base_names)])
         fd.close()
@@ -102,12 +104,12 @@ class CSVLog(Struct):
         """
         Parse single hitogram row.
         """
-        n_components = int(row[7])
-        off = 8 + 3 * n_components
+        n_components = int(row[12])
+        off = 13 + 3 * n_components
         params = np.array(map(float, row[8:off])).reshape((n_components, 3))
         item = Struct(dir_base=row[0], converged=int(row[1]),
                       fit_criteria=map(float, row[2:5]),
-                      chisquare=map(float, row[5:7]),
+                      chisquare=map(float, row[5:12]),
                       n_components=n_components,
                       params=params,
                       base_names=[ii.strip()
@@ -123,6 +125,11 @@ class CSVLog(Struct):
                          'bic' : item.fit_criteria[2],
                          'chisquare' : item.chisquare[0],
                          'chisquare p-value' : item.chisquare[1],
+                         'n_observations' : item.chisquare[2],
+                         'effect size' : item.chisquare[3],
+                         'chisquare(e)' : item.chisquare[4],
+                         'chisquare(e) p-value' : item.chisquare[5],
+                         'chisquare(e) ppower' : item.chisquare[6],
                          'n_components' : item.n_components,
                          'params' : item.params}
 
