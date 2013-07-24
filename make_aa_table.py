@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 import csv
+import sys
 
-with open('output/area-angles/log_angles.csv', 'rb') as fd:
+filename = sys.argv[1]
+filename_out = sys.argv[2]
+
+with open(filename, 'rb') as fd:
     reader = csv.reader(fd)
     header = reader.next()
     rows = [row for row in reader]
 
-with open('output/area_angles.csv', 'w') as fd:
+with open(filename_out, 'w') as fd:
     fd.write('dataset, -delta angle, centre angle, +delta angle,'
              ' -area, +area\n')
 
