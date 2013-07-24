@@ -7,7 +7,7 @@ c = castrated male
 import csv
 import numpy as np
 
-age_groups = np.array([[5, 10], [11, 20], [21, 30], [31, 100], [101, 1000]])
+age_groups = np.array([[1, 10], [11, 20], [21, 30], [31, 100], [101, 1000]])
 
 def get_age_group(age):
     return 1 + (np.searchsorted(age_groups.ravel(), [age])[0] // 2)
