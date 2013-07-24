@@ -106,7 +106,7 @@ class CSVLog(Struct):
         """
         n_components = int(row[12])
         off = 13 + 3 * n_components
-        params = np.array(map(float, row[8:off])).reshape((n_components, 3))
+        params = np.array(map(float, row[13:off])).reshape((n_components, 3))
         item = Struct(dir_base=row[0], converged=int(row[1]),
                       fit_criteria=map(float, row[2:5]),
                       chisquare=map(float, row[5:12]),
@@ -129,7 +129,7 @@ class CSVLog(Struct):
                          'effect size' : item.chisquare[3],
                          'chisquare(e)' : item.chisquare[4],
                          'chisquare(e) p-value' : item.chisquare[5],
-                         'chisquare(e) ppower' : item.chisquare[6],
+                         'chisquare(e) power' : item.chisquare[6],
                          'n_components' : item.n_components,
                          'params' : item.params}
 
