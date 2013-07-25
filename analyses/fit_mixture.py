@@ -300,7 +300,8 @@ For each data directory, a header is printed and then rows sorted by criteria:
 - header:
 
   dir_base | no. of parameter sets
-  id       | chisquare | p-value | llf | aic | bic values for each par. set
+  id       | chi2(e) | chi2(e) p-value | chi2(e) power | llf | aic | bic values
+           for each parameter set
 
 - rows:
 
@@ -316,7 +317,7 @@ def print_summary(summary, logs):
     dir_bases = [item.dir_base for item in logs[0].items]
     max_len = reduce(max, (len(ii) for ii in dir_bases), 0)
     head1 = '%%%ds | %%2d parameter sets' % max_len
-    head2 = '%%%dd | %%.2e | %%.2e | %%.6e | %%.6e | %%.6e' % max_len
+    head2 = '%%%dd | %%.2e | %%.2f | %%.2f | %%.6e | %%.6e | %%.6e' % max_len
     row = '  %2d%1s | %2d%1s | %2d%1s | %s'
 
     star = {False : '', True : '*'}
@@ -327,7 +328,7 @@ def print_summary(summary, logs):
         print head1 % (dir_base, n_psets)
         for ii in xrange(n_psets):
             # Prevent printing of too small numbers.
-            chisquare = np.asarray(items.chisquare[ii])
+            chisquare = np.asarray(items.chisquare[ii])[4:]
             aux = np.where(chisquare < 1e-99, 0.0, chisquare)
             print head2 % ((ii,) + tuple(aux)
                            + tuple(items.criteria[ii]))
