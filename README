@@ -1,2 +1,83 @@
 dist_mixtures
 =============
+
+A package for fitting histograms of spatial orientations by a mixture of von
+Mises distributions.
+
+License: New BSD License, see the LICENSE file.
+
+Installation
+------------
+
+Download the source code from [1].
+
+[1] https://github.com/rc/dist_mixtures
+
+The following dependencies need to be installed:
+
+- NumPy (http://numpy.org)
+- SciPy (http://scipy.org) - Git version
+- Matplotlib (http://matplotlib.sourceforge.net)
+- Statsmodels (http://statsmodels.sourceforge.net) - Git version
+
+Then ``cd`` into the ``dist_mixtures/`` directory.
+
+Usage
+-----
+
+Run ``fit_von_mises.py`` without arguments to see the help message::
+
+  $ ./fit_von_mises.py
+  Usage: fit_von_mises.py [options] pattern data_dir
+
+  Fit data files with names matching a given pattern by a mixture of von Mises
+  distributions.
+
+  Options:
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    -o dirname, --output-dir=dirname
+                          output directory [default: output]
+    -c filename, --conf=filename
+                          use configuration file with parameter sets. Ignored,
+                          if n_components option is given.
+    -n positive_int, --n-components=positive_int
+                          number of components of the mixture [default: 2]
+    -p kappa0,mu0,kappa1,mu1,..., --parameters=kappa0,mu0,kappa1,mu1,...
+                          initial guess of von Mises parameters for each
+                          component as a comma separated list, e.g., for two
+                          components: "1,0,1,0" corresponding to kappa0, mu0,
+                          kappa1, mu1 respectively. The location parameter mu
+                          should be given in degrees in [-90, 90[.
+    -d pattern, --dir-pattern=pattern
+                          pattern that subdirectories should match [default: *]
+    -m positive_int, --merge-bins=positive_int
+                          number of consecutive bins in data to merge [default:
+                          None]
+    --plot-bins-step=positive_int
+                          step to choose bins from all bins for histogram plots
+                          [default: 4]
+    --spread-data         spread raw data using their counts instead of just
+                          repeating them
+    -a, --area-angles     compute and draw angles of two systems of fibres
+                          determined by equal histogram areas
+    --no-neg-shift        do not add 180 degrees to negative angles
+    -s, --show            show the figures
+
+Example runs
+------------
+
+By default, the results are stored into a directory called ``output``. Use
+``-o`` option to change that.
+
+- Analyze histograms in ``*.txt`` files of data sets in ``data/<dataset name>``
+  directories, assume 2 von Mises mixture (VMM) components::
+
+    $ ./fit_von_mises.py "*.txt" data/ -n 2
+
+- Run analysis with parameters given in a file. This example shows how to run
+  the analysis with varying number of VMM components::
+
+    $ ./fit_von_mises.py "*.txt" data/ -c examples/psets/n_components.py
+
+  See other example parameter set files in ``examples/psets/``.
