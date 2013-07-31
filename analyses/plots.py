@@ -5,25 +5,31 @@ import matplotlib.pyplot as plt
 
 from analyses.transforms import transform_pi_deg, transform_2pi, fix_range
 
-def plot_data(data, fdata, bins, neg_shift):
+def plot_data(data, fdata, bins, neg_shift, plot_histogram=False):
     '''create figure with plot of raw data and histogram in subplots
-
-
     '''
-    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
+    nrows = 2 if plot_histogram else 1
+    fig, axs = plt.subplots(nrows=nrows, ncols=1, squeeze=False)
 
     td0 = transform_pi_deg(data[:, 0], neg_shift=neg_shift)
     ip = np.argsort(td0)
     xmin, xmax = (0, 180) if neg_shift else (-90, 90)
 
-    ax1.plot(td0[ip], data[ip, 1])
-    ax1.set_title('raw data')
-    ax1.set_xlim([xmin, xmax])
+    ax = axs[0, 0]
+    ax.plot(td0[ip], data[ip, 1], lw=2)
+    ax.set_title('raw data', fontsize=16)
+    ax.set_xlim([xmin, xmax])
+    ax.set_xlabel('angle', fontsize=16)
+    ax.set_ylabel('coherency', fontsize=16)
 
-    ax2.hist(transform_pi_deg(fdata, neg_shift=neg_shift),
+    if plot_histogram:
+        ax = axs[1, 0]
+        ax.hist(transform_pi_deg(fdata, neg_shift=neg_shift),
              bins=bins, alpha=0.5)
-    ax2.set_title('raw data histogram (counts)')
-    ax2.set_xlim([xmin, xmax])
+        ax.set_title('raw data histogram')
+        ax.set_xlim([xmin, xmax])
+        ax.set_xlabel('angle')
+        ax.set_ylabel('count')
 
     return fig
 
@@ -56,6 +62,9 @@ def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
 
     xmin, xmax = (0, 180) if neg_shift else (-90, 90)
     plt.axis(xmin=xmin, xmax=xmax)
+
+    plt.xlabel('angle', fontsize=16)
+    plt.ylabel('count', fontsize=16)
 
     return fig
 
@@ -98,7 +107,9 @@ def plot_estimated_dist(output_dir, result, source, pset_id=None):
     rbins = transform_2pi(bins) - np.pi * (source.neg_shift == True)
     fig = result.model.plot_dist(result.params, xtransform=xtr, bins=rbins,
                                  data=fdata)
-    fig.axes[0].set_title('Estimated distribution')
+    fig.axes[0].set_title('estimated distribution', fontsize=16)
+    fig.axes[0].set_xlabel('angle', fontsize=16)
+    fig.axes[0].set_ylabel('probability density function', fontsize=16)
 
     if pset_id is None:
         name = source.current.dir_base + '-fit.png'
