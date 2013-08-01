@@ -200,6 +200,7 @@ def fit(source_data, start_params, model_class, solver_conf):
 
     mod.source_data = source_data
 
+    np.random.seed(12344321)
     res = mod.fit(start_params=start_params, method=solver_conf[0],
                   **solver_conf[1])
 
