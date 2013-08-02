@@ -96,14 +96,22 @@ for max_nc in max_ncs:
 
             fnc = filtered_ncs[chosen_id, idir]
             pval = pvals[ids[inc[0]]][idir]
-            if pval >= 0.99999:
-                mark = '***'
-            elif pval >= 0.99:
-                mark = '** '
-            elif pval >= 0.95:
-                mark = '*  '
+            if reduced:
+                if pval >= 0.99999:
+                    mark = '***'
+                elif pval >= 0.99:
+                    mark = '** '
+                elif pval >= 0.95:
+                    mark = '*  '
+                else:
+                    mark = '   '
+
             else:
-                mark = '   '
+                if pval >= 0.95:
+                    mark = '*  '
+                else:
+                    mark = '   '
+
             column3[idir, ic] = '%d(%d)%s' % (fnc, chosen_nc, mark)
             ic += 1
 
