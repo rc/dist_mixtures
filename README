@@ -6,6 +6,14 @@ Mises distributions.
 
 License: New BSD License, see the LICENSE file.
 
+Data
+----
+
+This package has been developed to analyze muscle cells directions data coming
+from aortic segments. The related data files can be found at [1].
+
+[1] https://github.com/rc/dist_mixtures_data
+
 Installation
 ------------
 
