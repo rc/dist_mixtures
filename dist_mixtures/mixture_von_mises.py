@@ -255,7 +255,7 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
     statsmodels.base.model.GenericLikelihoodResults
 
     '''
-    def __init__(self, endog, exog):
+    def __init__(self, endog, exog=None):
         self.fixed_params = None
         super(VonMisesMixture, self).__init__(endog, exog)
 
