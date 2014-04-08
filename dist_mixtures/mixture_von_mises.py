@@ -255,6 +255,10 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
     statsmodels.base.model.GenericLikelihoodResults
 
     '''
+    def __init__(self, endog, exog):
+        self.fixed_params = None
+        super(VonMisesMixture, self).__init__(endog, exog)
+
     def fit(self, start_params=None, method='bfgs', maxiter=500, full_output=1,
             disp=1, callback=None, retall=0, **kwargs):
         """
