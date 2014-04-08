@@ -4,9 +4,12 @@ Fit data files with names matching a given pattern by a mixture of von Mises
 distributions.
 """
 import os
+import sys
+import shutil
 from optparse import OptionParser
 
 import dist_mixtures.mixture_von_mises as mvm
+from dist_mixtures.base import ordered_iteritems
 import analyses.ioutils as io
 from analyses.parameter_sets import ParameterSets
 from analyses.fit_mixture import (analyze, print_results, make_summary,
@@ -123,6 +126,29 @@ def main():
         psets = ParameterSets.from_conf(default_conf)
 
     psets.setup_options(options, default_conf=default_conf)
+
+    # Log input parameters.
+    output_dir = psets[0].output_dir
+    io.ensure_path(output_dir)
+    pars_filename = os.path.join(output_dir, 'pars.txt')
+    with open(pars_filename, 'w') as fd:
+        fd.write('command line\n')
+        fd.write('------------\n\n')
+        fd.write(' '.join(sys.argv) + '\n')
+
+        fd.write('\noptions\n')
+        fd.write('-------\n\n')
+        for key, val in ordered_iteritems(vars(options)):
+            fd.write('%s: %s\n' % (key, val))
+
+        fd.write('\ndefaults\n')
+        fd.write('--------\n\n')
+        for key, val in ordered_iteritems(default_conf[0]):
+            fd.write('%s: %s\n' % (key, val))
+
+    if (options.conf is not None) and (options.n_components is None):
+        # Copy configuration file.
+        shutil.copy2(options.conf, output_dir)
 
     get_data = io.locate_files(pattern, data_dir,
                                dir_pattern=options.dir_pattern,
