@@ -126,8 +126,8 @@ def analyze(source, psets, options):
                                                         len(pars0) / 2)
             print 'starting parameters:', start_parameters
 
-            res = fit(source_data, start_parameters,
-                      pset.model_class, pset.solver_conf)
+            res = fit(source_data, start_parameters, pset.constraints,
+                      pset.model_class, pset.solver_conf, pset=pset)
             res.model.summary_params(res.params,
                                      name='%d components' % pset.n_components)
 
@@ -171,7 +171,8 @@ def get_start_params(n_components, params=None, ncp=None):
 
     return start_params
 
-def fit(source_data, start_params, model_class, solver_conf):
+def fit(source_data, start_params, constraints, model_class, solver_conf,
+        pset=None):
     '''
     Create VonMisesMixture instance and fit to data.
 
@@ -184,10 +185,14 @@ def fit(source_data, start_params, model_class, solver_conf):
         The vector of starting parameters - shape plus location per component
         and probabilities for all components except the last one. Its length
         determines the number of components.
+    constraints : tuple of functions, optional
+        The constrain and expand functions for parameter constraints.
     model_class : MixtureVonMises or VonMisesMixtureBinned
         The class used for the fitting.
     solver_conf : (str, dict)
         Solver configuration tuple consisting of name and options dictionary.
+    pset : ParameterSet
+        The parameter set context for the constraints.
 
     Returns
     -------
@@ -212,6 +217,20 @@ def fit(source_data, start_params, model_class, solver_conf):
         mod = mvm.VonMisesMixtureBinned(source_data.data[:, 1], bins_exog)
 
     mod.source_data = source_data
+
+    if len(constraints):
+        constrain_fun, expand_fun = constraints
+
+        use, pars = constrain_fun(pset, start_params)
+        start_params = pars[use]
+
+        print 'constrained starting parameters:', start_params
+
+        mod.fixed_params = pars
+        mod.fixed_paramsmask = use
+        if expand_fun is not None:
+            import types
+            mod.expandparams = types.MethodType(expand_fun, mod)
 
     np.random.seed(12344321)
     res = mod.fit(start_params=start_params, method=solver_conf[0],
