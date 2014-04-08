@@ -264,7 +264,14 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
             start_params=start_params, method=method, maxiter=maxiter,
             full_output=full_output, disp=disp, callback=callback,
             retall=retall, **kwargs)
-        result.params = normalize_params(result.params)
+
+        if self.fixed_params is not None:
+            res_params = self.expandparams(result.params)
+
+        else:
+            res_params = result.params
+
+        result.params = normalize_params(res_params)
 
         #this is a bit different from the way results are updated in discrete
         #TODO: check this
@@ -400,6 +407,9 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
     def loglikeobs(self, params, x=None):
         '''loglikelihood of observations of a mixture of von mises distributions
         '''
+        if self.fixed_params is not None:
+            params = self.expandparams(params)
+
         return np.log(self.pdf_mix(params, x=x))
 
     def loglike(self, params, x=None):
@@ -589,6 +599,8 @@ class VonMisesMixtureBinned(VonMisesMixture):
         assume exog contains bins, endog counts
         problem bin-edges has one more observation
         '''
+        if not self.fixed_params is None:
+            params = self.expandparams(params)
 
         params_ = normalize_params(params)
         cdf_bins = self.cdf_mix(params_, x=self.bins)
