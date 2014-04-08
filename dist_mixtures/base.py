@@ -217,3 +217,10 @@ class Struct(object):
         Behaves like dict.setdefault().
         """
         return self.__dict__.setdefault(key, default)
+
+def ordered_iteritems(adict):
+    keys = adict.keys()
+    order = np.argsort(keys)
+    for ii in order:
+        key = keys[ii]
+        yield key, adict[key]
