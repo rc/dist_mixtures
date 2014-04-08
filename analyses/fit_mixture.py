@@ -101,16 +101,29 @@ def analyze(source, psets, options):
         for ii, pset in enumerate(psets):
             print '------------------------------------------------------'
             print pset
-            assert((len(pset.parameters) % 2) == 0)
-            if (ii > 0) and pset.parameters == 'previous':
+            pars0 = pset.parameters
+            zz = np.zeros(pset.n_components - 1, dtype=np.float64)
+            if isinstance(pars0, tuple):
+                fun = pars0[0]
+                if pars0[1] == 'area_angles':
+                    pars = fun(pset, area_angles)
+
+                else:
+                    pars = fun(pset)
+
                 start_parameters = get_start_params(pset.n_components,
-                                                    res.params)
+                                                    np.r_[pars, zz])
 
             else:
-                zz = np.zeros(pset.n_components - 1, dtype=np.float64)
-                start_parameters = get_start_params(pset.n_components,
-                                                    np.r_[pset.parameters, zz],
-                                                    len(pset.parameters) / 2)
+                assert((len(pars0) % 2) == 0)
+                if (ii > 0) and pars0 == 'previous':
+                    start_parameters = get_start_params(pset.n_components,
+                                                        res.params)
+
+                else:
+                    start_parameters = get_start_params(pset.n_components,
+                                                        np.r_[pars0, zz],
+                                                        len(pars0) / 2)
             print 'starting parameters:', start_parameters
 
             res = fit(source_data, start_parameters,
