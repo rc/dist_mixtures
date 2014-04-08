@@ -54,13 +54,14 @@ class ParameterSet(Struct):
     @staticmethod
     def from_conf(conf):
         return ParameterSet(conf.get('model_class'), conf.get('n_components'),
-                            conf.get('parameters'),
+                            conf.get('parameters'), conf.get('constraints', ()),
                             conf.get('solver'), conf.get('output_dir'))
 
-    def __init__(self, model_class, n_components, parameters, solver_conf,
-                 output_dir):
+    def __init__(self, model_class, n_components, parameters, constraints,
+                 solver_conf, output_dir):
         Struct.__init__(self, model_class=model_class,
                         n_components=n_components, parameters=parameters,
+                        constraints=constraints,
                         solver_conf=solver_conf, output_dir=output_dir)
 
     def override(self, options, defaults, previous=None):
@@ -68,6 +69,6 @@ class ParameterSet(Struct):
         Override parameter from `options`, provide default values of unspecified
         attributes from `previous` or `defaults`.
         """
-        for attr in ['model_class', 'n_components', 'parameters',
+        for attr in ['model_class', 'n_components', 'parameters', 'constraints',
                      'solver_conf', 'output_dir']:
             _override(attr, self, options, defaults, previous=previous)
