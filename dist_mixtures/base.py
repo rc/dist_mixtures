@@ -218,6 +218,25 @@ class Struct(object):
         """
         return self.__dict__.setdefault(key, default)
 
+class LogOutput(Struct):
+    """
+    Log print statements to a given file.
+    """
+
+    def __init__(self, stdout, filename):
+        self.stdout = stdout
+        self.filename = filename
+        with open(filename, 'w'):
+            pass
+
+    def write(self, text):
+        self.stdout.write(text)
+        with open(self.filename, 'a') as fd:
+            fd.write(text)
+
+    def close(self):
+        pass
+
 def ordered_iteritems(adict):
     keys = adict.keys()
     order = np.argsort(keys)

@@ -9,7 +9,7 @@ import shutil
 from optparse import OptionParser
 
 import dist_mixtures.mixture_von_mises as mvm
-from dist_mixtures.base import ordered_iteritems
+from dist_mixtures.base import ordered_iteritems, LogOutput
 import analyses.ioutils as io
 from analyses.parameter_sets import ParameterSets
 from analyses.fit_mixture import (analyze, print_results, make_summary,
@@ -130,6 +130,11 @@ def main():
     # Log input parameters.
     output_dir = psets[0].output_dir
     io.ensure_path(output_dir)
+
+    stdout = sys.stdout
+    output = LogOutput(sys.stdout, os.path.join(output_dir,'output_log.txt'))
+    sys.stdout = output
+
     pars_filename = os.path.join(output_dir, 'pars.txt')
     with open(pars_filename, 'w') as fd:
         fd.write('command line\n')
@@ -164,6 +169,8 @@ def main():
 
     if alog is not None:
         print_angles(alog)
+
+    sys.stdout = stdout
 
 if __name__ == '__main__':
     main()
