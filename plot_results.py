@@ -89,6 +89,7 @@ def plot_params(fig_num, logs, n_components, gmap, dir_bases=None,
     if sort_x:
         ii = sparams[ix, 0, -1].argsort()[::-1]
         ix = ix[ii]
+        dir_bases = [dir_bases[ic] for ic in ii]
 
     fig, axs = plt.subplots(3, 1, sharex=True, num=fig_num)
 
