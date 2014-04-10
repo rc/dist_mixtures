@@ -66,14 +66,14 @@ def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
     ax = plt.gca()
 
     if ylabel is None:
-        ylabel = r'$log_{10}(%s - min_{N_c}(%s) + 0.1)$' % (key, key)
+        ylabel = r'$log_{10}(%s - min_{i}(%s) + 0.1)$' % (key, key)
 
     dys = []
     labels = []
-    for log in logs:
+    for ilog, log in enumerate(logs):
         dy = log.get_value(key)
         dys.append(dy)
-        labels.append('%d' % log.n_components)
+        labels.append('%d' % ilog)
     dys = np.asarray(dys)
 
     dx = np.arange(dys.shape[1])
@@ -104,16 +104,8 @@ def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
 
     return fig
 
-def plot_params(fig_num, logs, n_components, gmap, dir_bases=None,
+def plot_params(fig_num, log, gmap, dir_bases=None,
                 cut_prob=0.1, sort_x=False, select_x=None):
-
-    for log in logs:
-        if log.n_components == n_components:
-            break
-
-    else:
-        raise ValueError('no log with %d components!' % n_components)
-
     params = np.array(log.get_value('params'))
 
     aux = params.view('f8,f8,f8')
@@ -223,11 +215,10 @@ else:
     group_name = None
 
 plt.close('all')
-for log in logs:
-    nc = log.n_components
-    fig = plot_params(10 + nc, logs, nc, gmap, dir_bases=dir_bases, sort_x=True)
+for ilog, log in enumerate(logs):
+    fig = plot_params(10 + ilog, log, gmap, dir_bases=dir_bases, sort_x=True)
     esuffix = '' if group_name is None else '_%s_%s' % (group_name, val)
-    save_fig(fig, op.join(dirname, 'params_%d' % nc + esuffix), suffix)
+    save_fig(fig, op.join(dirname, 'params_%d' % ilog + esuffix), suffix)
 
 fig = plot_fit_info(1, logs, 'nllf', tr_log10)
 save_fig(fig, op.join(dirname, 'nllf'), suffix)
