@@ -73,11 +73,13 @@ def plot_params(fig_num, logs, n_components, gmap, dir_bases=None,
     sparams = sparams[:, ::-1, :]
 
     used_dir_bases = [ii.dir_base for ii in logs[0].items]
+    # Sort to have alphabetical order for equal probabilities.
     if dir_bases is None:
-        dir_bases = used_dir_bases
+        dir_bases = sorted(used_dir_bases, reverse=sort_x)
 
     else:
-        dir_bases = list(set(dir_bases).intersection(used_dir_bases))
+        dir_bases = sorted(list(set(dir_bases).intersection(used_dir_bases)),
+                           reverse=sort_x)
 
     ix = np.array([ii for ii in range(sparams.shape[0])
                    if logs[0].items[ii].dir_base in dir_bases])
@@ -87,7 +89,7 @@ def plot_params(fig_num, logs, n_components, gmap, dir_bases=None,
     plt.clf()
 
     if sort_x:
-        ii = sparams[ix, 0, -1].argsort()[::-1]
+        ii = sparams[ix, 0, -1].argsort(kind='mergesort')[::-1]
         ix = ix[ii]
         dir_bases = [dir_bases[ic] for ic in ii]
 
