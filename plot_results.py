@@ -14,6 +14,50 @@ def get_fig_size(nx):
     de = 0.1 / (fig_size[0] / 8.0)
     return fig_size, de
 
+def make_colors(num):
+    """
+    Make `num` continuously changing rainbow-like RGB colors.
+    """
+    def g(n):
+        """
+        Map sine [-1.0 .. 1.0] => color byte [0 .. 255].
+        """
+        return 255 * (n + 1) / 2.0
+
+    def f(start, stop, num):
+
+        interval = (stop - start) / num
+
+        for n in range(num):
+            coefficient = start + interval * n
+            yield g(np.sin(coefficient * np.pi))
+
+    red = f(0.5, 1.5, num)
+    green = f(1.5, 3.5, num)
+    blue = f(1.5, 2.5, num)
+
+    rgbs = [('#%02x%02x%02x' % rgb) for rgb in zip(blue, green, red)]
+    return rgbs
+
+def get_colors(num):
+    if num <= 5:
+        colors = ['b', 'g', 'r', 'c', 'm']
+
+    else:
+        colors = make_colors(num)
+
+    return colors
+
+class Cycler(list):
+    def __init__(self, sequence):
+        list.__init__(self, sequence)
+        self.n_max = len(sequence)
+
+    def __getitem__(self, ii):
+        return list.__getitem__(self, ii % self.n_max)
+
+markers = Cycler(['o', 'v', 's','^', 'D', '<', 'p', '>', 'h'])
+
 def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
     fig_size, de = get_fig_size(len(logs[0].items))
     fig = plt.figure(fig_num, fig_size)
@@ -34,8 +78,12 @@ def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
 
     dx = np.arange(dys.shape[1])
     dymin = dys.min(axis=0)
-    for dy in dys:
-        plt.plot(dx, transform(dy, dymin), marker='o')
+
+    num = len(dys)
+    colors = get_colors(num)
+    for ic, dy in enumerate(dys):
+        plt.plot(dx, transform(dy, dymin), color=colors[ic],
+                 marker=markers[ic], alpha=0.5)
 
     ylim = ax.get_ylim()
     yshift = 0.2 * (ylim[1] - ylim[0])
@@ -97,15 +145,16 @@ def plot_params(fig_num, logs, n_components, gmap, dir_bases=None,
 
     dx = np.arange(ix.shape[0])
 
-    colors = ['b', 'g', 'r', 'c', 'm']
-    for ic in range(sparams.shape[1]):
+    num = sparams.shape[1]
+    colors = get_colors(num)
+    for ic in range(num):
         ms = 200 * np.sqrt(sparams[ix, ic, 2])
         axs[0].scatter(dx, sparams[ix, ic, 0], ms, c=colors[ic],
-                       marker='o', alpha=0.8)
+                       marker='o', alpha=0.5)
         axs[1].scatter(dx, sparams[ix, ic, 1], ms, c=colors[ic],
-                       marker='o', alpha=0.8)
+                       marker='o', alpha=0.5)
         axs[2].scatter(dx, sparams[ix, ic, 2], ms, c=colors[ic],
-                       marker='o', alpha=0.8)
+                       marker='o', alpha=0.5)
 
     axs[0].grid(axis='x')
     axs[1].grid(axis='x')
