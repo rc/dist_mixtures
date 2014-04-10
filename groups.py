@@ -13,17 +13,21 @@ def get_age_group(age):
     return 1 + (np.searchsorted(age_groups.ravel(), [age])[0] // 2)
 
 def parse_row(row):
-    return (row[0], np.int32(row[1]), np.int32(row[2]), row[3], row[4])
+    return (row[0], np.int32(row[1]), np.int32(row[2]),
+            row[3].replace(' ', '_'), row[4].replace(' ', '_'),
+            row[5], row[6])
 
 def read_group_info():
     group_info = np.empty(83,
                           dtype=[('dataset', 'a6'),
                                  ('number', 'i4'),
                                  ('age', 'i4'),
-                                 ('sex', 'a1'),
+                                 ('age_group', 'a14'),
+                                 ('pig_group', 'a14'),
+                                 ('sex', 'a6'),
                                  ('segment', 'a1')])
 
-    with open('data-aorta/smc_orientation_tangential.csv', 'rb') as fd:
+    with open('data-aorta/aorta_pig_groups.csv', 'rb') as fd:
         reader = csv.reader(fd)
         reader.next()
         group_info[:] = [parse_row(row) for row in reader]
@@ -33,17 +37,15 @@ def read_group_info():
 def map_group_names(group_info):
     gmap = {}
     for row in group_info:
-        gmap[row['dataset']] = (row['segment'], get_age_group(row['age']))
+        gmap[row['dataset']] = (row['segment'], get_age_group(row['age']),
+                                row['age_group'], row['pig_group'])
 
     return gmap
 
-def get_datasets_of_group(group_info, group):
-    if isinstance(group, int):
-        age = group_info['age']
-        col = np.array([get_age_group(ii) for ii in age])
+def get_datasets_of_group(group_info, group_name, val):
+    group = group_info[group_name]
+    if group_name == 'age':
+        group = np.array([get_age_group(ii) for ii in group])
 
-    else:
-        col = group_info['segment']
-
-    ii = np.where(col == group)[0]
+    ii = np.where(val == group)[0]
     return group_info['dataset'][ii]
