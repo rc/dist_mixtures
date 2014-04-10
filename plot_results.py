@@ -195,6 +195,13 @@ def tr_log10(dy, dymin):
 def tr_none(dy, dymin):
     return dy
 
+def try_int(arg):
+    try:
+        return int(arg)
+
+    except:
+        return arg
+
 suffix = ['.png', '.pdf']
 
 args = sys.argv[1:]
@@ -205,25 +212,21 @@ logs = read_logs(dirname, 'log_?.csv')
 group_info = read_group_info()
 gmap = map_group_names(group_info)
 
-if len(args) == 2:
-    group = args[1]
-    try:
-        group = int(args[1])
+if len(args) == 3:
+    group_name = try_int(args[1])
+    val = try_int(args[2])
 
-    except ValueError:
-        pass
-
-    dir_bases = get_datasets_of_group(group_info, group)
+    dir_bases = get_datasets_of_group(group_info, group_name, val)
 
 else:
     dir_bases = None
-    group = None
+    group_name = None
 
 plt.close('all')
 for log in logs:
     nc = log.n_components
     fig = plot_params(10 + nc, logs, nc, gmap, dir_bases=dir_bases, sort_x=True)
-    esuffix = '' if group is None else '_%s' % group
+    esuffix = '' if group_name is None else '_%s_%s' % (group_name, val)
     save_fig(fig, op.join(dirname, 'params_%d' % nc + esuffix), suffix)
 
 fig = plot_fit_info(1, logs, 'nllf', tr_log10)
