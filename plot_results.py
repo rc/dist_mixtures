@@ -58,6 +58,9 @@ class Cycler(list):
 
 markers = Cycler(['o', 'v', 's','^', 'D', '<', 'p', '>', 'h'])
 
+def format_group(val):
+    return ('%s%s%s' % (val[0], val[2][0], val[3][0])).upper()
+
 def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
     fig_size, de = get_fig_size(len(logs[0].items))
     fig = plt.figure(fig_num, fig_size)
@@ -159,7 +162,8 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
     axs[0].set_ylim((0, 180))
 
     for ii, dir_base in enumerate(dir_bases):
-        axs[0].text(dx[ii] - 0.5, 185, '%s%d' % gmap[dir_base])
+        axs[0].text(dx[ii] - 0.5, 185, '%s' % format_group(gmap[dir_base]),
+                    fontsize=9, family='monospace')
 
     axs[1].set_yscale('log')
 
