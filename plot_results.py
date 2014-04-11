@@ -111,30 +111,33 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
                 cut_prob=0.1, sort_x=False, select_x=None):
     params = np.array(log.get_value('params'))
 
+    if dir_bases is None:
+        dir_bases = [ii.dir_base for ii in logs[0].items]
+
+    # Select parameters corresponding to dir_bases.
+    ix = np.array([ii for ii in range(params.shape[0])
+                   if logs[0].items[ii].dir_base in dir_bases])
+    params = params[ix]
+
+    # Sort components by probabilities (descending).
     aux = params.view('f8,f8,f8')
     sparams = np.sort(aux, order=['f2'], axis=1).view(np.float64)
     sparams = sparams[:, ::-1, :]
 
-    used_dir_bases = [ii.dir_base for ii in logs[0].items]
     # Sort to have alphabetical order for equal probabilities.
-    if dir_bases is None:
-        dir_bases = sorted(used_dir_bases, reverse=sort_x)
-
-    else:
-        dir_bases = sorted(list(set(dir_bases).intersection(used_dir_bases)),
-                           reverse=sort_x)
-
-    ix = np.array([ii for ii in range(sparams.shape[0])
-                   if logs[0].items[ii].dir_base in dir_bases])
+    ii = np.argsort(dir_bases, kind='mergesort')[::-1]
+    dir_bases = np.array(dir_bases)[ii]
+    sparams = sparams[ii]
 
     fig_size, de = get_fig_size(ix.shape[0])
     fig = plt.figure(fig_num, fig_size)
     plt.clf()
 
     if sort_x:
-        ii = sparams[ix, 0, -1].argsort(kind='mergesort')[::-1]
-        ix = ix[ii]
-        dir_bases = [dir_bases[ic] for ic in ii]
+        # Sort according to the highest component probability (descending).
+        ii = sparams[:, 0, -1].argsort(kind='mergesort')[::-1]
+        sparams = sparams[ii]
+        dir_bases = dir_bases[ii]
 
     fig, axs = plt.subplots(3, 1, sharex=True, num=fig_num)
 
@@ -143,12 +146,12 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
     num = sparams.shape[1]
     colors = get_colors(num)
     for ic in range(num):
-        ms = 200 * np.sqrt(sparams[ix, ic, 2])
-        axs[0].scatter(dx, sparams[ix, ic, 0], ms, c=colors[ic],
+        ms = 200 * np.sqrt(sparams[:, ic, 2])
+        axs[0].scatter(dx, sparams[:, ic, 0], ms, c=colors[ic],
                        marker='o', alpha=0.5)
-        axs[1].scatter(dx, sparams[ix, ic, 1], ms, c=colors[ic],
+        axs[1].scatter(dx, sparams[:, ic, 1], ms, c=colors[ic],
                        marker='o', alpha=0.5)
-        axs[2].scatter(dx, sparams[ix, ic, 2], ms, c=colors[ic],
+        axs[2].scatter(dx, sparams[:, ic, 2], ms, c=colors[ic],
                        marker='o', alpha=0.5)
 
     axs[0].grid(axis='x')
