@@ -73,6 +73,8 @@ def analyze(source, psets, options):
     """
     from analyses.logs import create_logs, AnglesCSVLog
 
+    plt.rcParams.update(options.rc)
+
     logs = create_logs(psets)
 
     if options.area_angles:

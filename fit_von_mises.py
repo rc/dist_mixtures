@@ -15,6 +15,14 @@ from analyses.parameter_sets import ParameterSets
 from analyses.fit_mixture import (analyze, print_results, make_summary,
                                   print_summary, print_angles, DataSource)
 
+def parse_rc(option, opt, value, parser):
+    pars = {}
+    for pair in value.split(','):
+        key, val = pair.split('=')
+        pars[key] = eval(val)
+
+    setattr(parser.values, option.dest, pars)
+
 usage = '%prog [options] pattern data_dir\n' + __doc__.rstrip()
 
 defaults = {
@@ -53,6 +61,7 @@ help = {
     ' equal histogram areas',
     'neg_shift' :
     'do not add 180 degrees to negative angles',
+    'rc' : 'matplotlib resources',
     'show' :
     'show the figures',
 }
@@ -89,6 +98,9 @@ def get_options_parser():
     parser.add_option('', '--no-neg-shift',
                       action='store_false', dest='neg_shift',
                       default=True, help=help['neg_shift'])
+    parser.add_option('--rc', type='str', metavar='key=val,...',
+                      action='callback', dest='rc',
+                      callback=parse_rc, default={}, help=help['rc'])
     parser.add_option('-s', '--show',
                       action='store_true', dest='show',
                       default=False, help=help['show'])
