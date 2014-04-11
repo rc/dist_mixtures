@@ -108,7 +108,7 @@ def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
     return fig
 
 def plot_params(fig_num, log, gmap, dir_bases=None,
-                cut_prob=0.1, sort_x=False, select_x=None):
+                cut_prob=0.1, sort_x=False, select_x=None, equal_probs=False):
     params = np.array(log.get_value('params'))
 
     if dir_bases is None:
@@ -139,7 +139,9 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
         sparams = sparams[ii]
         dir_bases = dir_bases[ii]
 
-    fig, axs = plt.subplots(3, 1, sharex=True, num=fig_num)
+    n_ax = 2 + ((not equal_probs)
+                or (sparams[:, :, 2] != sparams[0, 0, 2]).any())
+    fig, axs = plt.subplots(n_ax, 1, sharex=True, num=fig_num)
 
     dx = np.arange(ix.shape[0])
 
@@ -151,16 +153,19 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
                        marker='o', alpha=0.5)
         axs[1].scatter(dx, sparams[:, ic, 1], ms, c=colors[ic],
                        marker='o', alpha=0.5)
-        axs[2].scatter(dx, sparams[:, ic, 2], ms, c=colors[ic],
-                       marker='o', alpha=0.5)
+        if n_ax == 3:
+            axs[2].scatter(dx, sparams[:, ic, 2], ms, c=colors[ic],
+                           marker='o', alpha=0.5)
 
     axs[0].grid(axis='x')
     axs[1].grid(axis='x')
-    axs[2].grid(axis='x')
 
     axs[0].set_ylabel(r'$\mu$')
     axs[1].set_ylabel(r'$\kappa$')
-    axs[2].set_ylabel('prob.')
+
+    if n_ax == 3:
+        axs[2].grid(axis='x')
+        axs[2].set_ylabel('prob.')
 
     axs[0].set_ylim((0, 180))
 
@@ -171,11 +176,12 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
     axs[1].set_yscale('log')
 
     plt.xticks(rotation=70)
-    axs[2].set_xticks(dx)
-    axs[2].set_xticklabels(dir_bases)
-    axs[2].set_xlim((-1, ix.shape[0]))
-    axs[2].set_ylim((-0.05, 1.05))
-    axs[2].hlines([cut_prob], -1, sparams.shape[0])
+    axs[-1].set_xticks(dx)
+    axs[-1].set_xticklabels(dir_bases)
+    axs[-1].set_xlim((-1, ix.shape[0]))
+    if n_ax == 3:
+        axs[-1].set_ylim((-0.05, 1.05))
+        axs[-1].hlines([cut_prob], -1, sparams.shape[0])
 
     plt.subplots_adjust(bottom=0.12, top=0.95, left=de, right=1.0-de)
 
