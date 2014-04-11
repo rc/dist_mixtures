@@ -17,10 +17,10 @@ def plot_data(data, fdata, bins, neg_shift, plot_histogram=False):
 
     ax = axs[0, 0]
     ax.plot(td0[ip], data[ip, 1], lw=2)
-    ax.set_title('raw data', fontsize=16)
+    ax.set_title('raw data')
     ax.set_xlim([xmin, xmax])
-    ax.set_xlabel('angle', fontsize=16)
-    ax.set_ylabel('coherency', fontsize=16)
+    ax.set_xlabel('angle', fontsize='large')
+    ax.set_ylabel('coherency', fontsize='large')
 
     if plot_histogram:
         ax = axs[1, 0]
@@ -53,8 +53,9 @@ def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
 
     fig = plt.figure(3)
     plt.clf()
-    plt.title('original (blue, %d) vs. simulated (green, %s)'
-              % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)))
+    plt.title('orig. (blue, %d) vs. sim. (green, %s)'
+              % (fdata.shape[0], ', '.join('%d' % ii for ii in sizes)),
+              fontsize='medium')
     plt.hist(transform_pi_deg(fdata, neg_shift=neg_shift),
              bins=bins, alpha=0.5)
     plt.hist(transform_pi_deg(rvs, neg_shift=neg_shift),
@@ -63,8 +64,8 @@ def plot_rvs_comparison(fdata, rvs, sizes, bins, neg_shift):
     xmin, xmax = (0, 180) if neg_shift else (-90, 90)
     plt.axis(xmin=xmin, xmax=xmax)
 
-    plt.xlabel('angle', fontsize=16)
-    plt.ylabel('count', fontsize=16)
+    plt.xlabel('angle', fontsize='large')
+    plt.ylabel('count', fontsize='large')
 
     return fig
 
@@ -98,7 +99,9 @@ def plot_raw_data(output_dir, source, area_angles=None):
     if area_angles is not None:
         draw_areas(fig.axes[0], *area_angles)
 
+    plt.tight_layout(pad=0.5)
     fig.savefig(figname)
+    plt.close(fig)
 
 def plot_estimated_dist(output_dir, result, source, pset_id=None):
     data, fdata, bins = source.get_source_data()
@@ -107,9 +110,9 @@ def plot_estimated_dist(output_dir, result, source, pset_id=None):
     rbins = transform_2pi(bins) - np.pi * (source.neg_shift == True)
     fig = result.model.plot_dist(result.params, xtransform=xtr, bins=rbins,
                                  data=fdata)
-    fig.axes[0].set_title('estimated distribution', fontsize=16)
-    fig.axes[0].set_xlabel('angle', fontsize=16)
-    fig.axes[0].set_ylabel('probability density function', fontsize=16)
+    fig.axes[0].set_title('estimated distribution')
+    fig.axes[0].set_xlabel('angle', fontsize='large')
+    fig.axes[0].set_ylabel('probability density function', fontsize='large')
 
     if pset_id is None:
         name = source.current.dir_base + '-fit.png'
@@ -118,7 +121,10 @@ def plot_estimated_dist(output_dir, result, source, pset_id=None):
         name = source.current.dir_base + '-fit-%d.png' % pset_id
 
     figname = os.path.join(output_dir, name)
+
+    plt.tight_layout(pad=0.5)
     fig.savefig(figname)
+    plt.close(fig)
 
 def plot_histogram_comparison(output_dir, result, source, pset_id=None):
     data, fdata, bins = source.get_source_data()
@@ -137,4 +143,7 @@ def plot_histogram_comparison(output_dir, result, source, pset_id=None):
         name = source.current.dir_base + '-cmp-%d.png' % pset_id
 
     figname = os.path.join(output_dir, name)
+
+    plt.tight_layout(pad=0.5)
     fig.savefig(figname)
+    plt.close(fig)
