@@ -304,6 +304,17 @@ def main():
                         'chisquare(e) power')
     save_fig(fig, op.join(dirname, 'chisquare(e) power'), suffixes)
 
+    fig = plot_fit_info(11, logs, 'nllf', tr_none, '-llf')
+    save_fig(fig, op.join(dirname, 'nllf-raw'), suffixes)
+    fig = plot_fit_info(12, logs, 'aic', tr_none, 'aic')
+    save_fig(fig, op.join(dirname, 'aic-raw'), suffixes)
+    fig = plot_fit_info(13, logs, 'bic', tr_none, 'bic')
+    save_fig(fig, op.join(dirname, 'bic-raw'), suffixes)
+    fig = plot_fit_info(14, logs, 'chisquare', tr_none, 'chisquare')
+    save_fig(fig, op.join(dirname, 'chisquare-raw'), suffixes)
+    fig = plot_fit_info(15, logs, 'chisquare(e)', tr_none, 'chisquare(e)')
+    save_fig(fig, op.join(dirname, 'chisquare(e)-raw'), suffixes)
+
     if options.show:
         plt.show()
 
