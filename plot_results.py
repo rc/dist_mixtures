@@ -1,12 +1,16 @@
 #!/usr/bin/env python
-import sys
+"""
+Plot overall/group results from logs with mixtures of von Mises distributions.
+"""
 import os.path as op
+from optparse import OptionParser
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from analyses.logs import read_logs
 from groups import read_group_info, map_group_names, get_datasets_of_group
+from fit_von_mises import parse_rc
 
 def get_fig_size(nx):
     fig_size = (np.clip(int(8 * nx / 20.), 8, 32), 6)
@@ -210,50 +214,98 @@ def try_int(arg):
     except:
         return arg
 
-suffix = ['.png', '.pdf']
+usage = '%prog [options] log_pattern\n' + __doc__.rstrip()
 
-args = sys.argv[1:]
+helps = {
+    'group' : 'group name and group value',
+    'plot_equal_probs' : 'plot probabilities even if all are equal to'
+    ' a single value',
+    'suffixes' : 'figure suffixes for saving [default: %default]',
+    'rc' : 'matplotlib resources',
+    'show' :
+    'show the figures',
+}
 
-dirname = args[0]
-logs = read_logs(dirname, 'log_?.csv')
+def get_options_parser():
+    parser = OptionParser(usage=usage, version='%prog')
+    parser.add_option('-g', '--group', metavar='group_name,group_value',
+                      action='store', dest='group',
+                      default=None, help=helps['group'])
+    parser.add_option('-e', '--equal-probs',
+                      action='store_true', dest='plot_equal_probs',
+                      default=False, help=helps['plot_equal_probs'])
+    parser.add_option('', '--suffixes', metavar='suffix1,...',
+                      action='store', dest='suffixes',
+                      default='png,pdf', help=helps['suffixes'])
+    parser.add_option('--rc', type='str', metavar='key=val,...',
+                      action='callback', dest='rc',
+                      callback=parse_rc, default={}, help=helps['rc'])
+    parser.add_option('-s', '--show',
+                      action='store_true', dest='show',
+                      default=False, help=helps['show'])
 
-group_info = read_group_info()
-gmap = map_group_names(group_info)
+    return parser
 
-if len(args) == 3:
-    group_name = try_int(args[1])
-    val = try_int(args[2])
+def main():
+    parser = get_options_parser()
+    options, args = parser.parse_args()
 
-    dir_bases = get_datasets_of_group(group_info, group_name, val)
+    if len(args) != 1:
+        parser.print_help()
+        return
 
-else:
-    dir_bases = None
-    group_name = None
+    dirname, pattern = op.split(args[0])
+    logs = read_logs(dirname, pattern)
 
-plt.close('all')
-for ilog, log in enumerate(logs):
-    fig = plot_params(10 + ilog, log, gmap, dir_bases=dir_bases, sort_x=True)
-    esuffix = '' if group_name is None else '_%s_%s' % (group_name, val)
-    save_fig(fig, op.join(dirname, 'params_%d' % ilog + esuffix), suffix)
+    group_info = read_group_info()
+    gmap = map_group_names(group_info)
 
-fig = plot_fit_info(1, logs, 'nllf', tr_log10)
-save_fig(fig, op.join(dirname, 'nllf'), suffix)
-fig = plot_fit_info(2, logs, 'aic', tr_log10)
-save_fig(fig, op.join(dirname, 'aic'), suffix)
-fig = plot_fit_info(3, logs, 'bic', tr_log10)
-save_fig(fig, op.join(dirname, 'bic'), suffix)
-fig = plot_fit_info(4, logs, 'chisquare', tr_log10)
-save_fig(fig, op.join(dirname, 'chisquare'), suffix)
-fig = plot_fit_info(5, logs, 'chisquare p-value', tr_none, 'chisquare p-value')
-save_fig(fig, op.join(dirname, 'chisquare p-value'), suffix)
+    if options.group is not None:
+        aux = options.group.split(',')
+        group_name = try_int(aux[0])
+        val = try_int(aux[1])
 
-fig = plot_fit_info(6, logs, 'chisquare(e)', tr_log10)
-save_fig(fig, op.join(dirname, 'chisquare(e)'), suffix)
-fig = plot_fit_info(7, logs, 'chisquare(e) p-value', tr_none,
-                    'chisquare(e) p-value')
-save_fig(fig, op.join(dirname, 'chisquare(e) p-value'), suffix)
-fig = plot_fit_info(8, logs, 'chisquare(e) power', tr_none,
-                    'chisquare(e) power')
-save_fig(fig, op.join(dirname, 'chisquare(e) power'), suffix)
+        dir_bases = get_datasets_of_group(group_info, group_name, val)
 
-plt.show()
+    else:
+        dir_bases = None
+        group_name = None
+
+    equal_probs = not options.plot_equal_probs
+    suffixes = ['.' + ii for ii in options.suffixes.split(',')]
+
+    plt.rcParams.update(options.rc)
+
+    plt.close('all')
+    for ilog, log in enumerate(logs):
+        fig = plot_params(20 + ilog, log, gmap, dir_bases=dir_bases,
+                          sort_x=True, equal_probs=equal_probs)
+        esuffix = '' if group_name is None else '_%s_%s' % (group_name, val)
+        save_fig(fig, op.join(dirname, 'params_%d' % ilog + esuffix), suffixes)
+
+    fig = plot_fit_info(1, logs, 'nllf', tr_log10)
+    save_fig(fig, op.join(dirname, 'nllf'), suffixes)
+    fig = plot_fit_info(2, logs, 'aic', tr_log10)
+    save_fig(fig, op.join(dirname, 'aic'), suffixes)
+    fig = plot_fit_info(3, logs, 'bic', tr_log10)
+    save_fig(fig, op.join(dirname, 'bic'), suffixes)
+    fig = plot_fit_info(4, logs, 'chisquare', tr_log10)
+    save_fig(fig, op.join(dirname, 'chisquare'), suffixes)
+    fig = plot_fit_info(5, logs, 'chisquare p-value', tr_none,
+                        'chisquare p-value')
+    save_fig(fig, op.join(dirname, 'chisquare p-value'), suffixes)
+
+    fig = plot_fit_info(6, logs, 'chisquare(e)', tr_log10)
+    save_fig(fig, op.join(dirname, 'chisquare(e)'), suffixes)
+    fig = plot_fit_info(7, logs, 'chisquare(e) p-value', tr_none,
+                        'chisquare(e) p-value')
+    save_fig(fig, op.join(dirname, 'chisquare(e) p-value'), suffixes)
+    fig = plot_fit_info(8, logs, 'chisquare(e) power', tr_none,
+                        'chisquare(e) power')
+    save_fig(fig, op.join(dirname, 'chisquare(e) power'), suffixes)
+
+    if options.show:
+        plt.show()
+
+if __name__ == '__main__':
+    main()
