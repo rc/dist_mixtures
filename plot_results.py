@@ -91,9 +91,10 @@ def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
     ylim = ax.get_ylim()
     yshift = 0.2 * (ylim[1] - ylim[0])
 
-    for ii, _dx in enumerate(dx):
-        plt.text(_dx, ylim[0] - 0.3 * yshift, '%.2e' % dymin[ii],
-                 size=10, rotation=-50)
+    if transform != tr_none:
+        for ii, _dx in enumerate(dx):
+            plt.text(_dx, ylim[0] - 0.3 * yshift, '%.2e' % dymin[ii],
+                     size='small', rotation=-50)
 
     ax.set_ylim([ylim[0] - yshift, ylim[1]])
 
@@ -101,7 +102,7 @@ def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
     ax.set_xticks(dx)
     ax.set_xticklabels([ii.dir_base for ii in logs[0].items])
     ax.set_xlim((-1, dx[-1] + 1))
-    ax.set_ylabel(ylabel)
+    ax.set_ylabel(ylabel, fontsize='large')
     ax.grid(axis='x')
     ax.legend(labels)
 
@@ -160,18 +161,19 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
     axs[0].grid(axis='x')
     axs[1].grid(axis='x')
 
-    axs[0].set_ylabel(r'$\mu$')
-    axs[1].set_ylabel(r'$\kappa$')
+    axs[0].set_ylabel(r'$\mu$', fontsize='large')
+    axs[1].set_ylabel(r'$\kappa$', fontsize='large')
 
     if n_ax == 3:
         axs[2].grid(axis='x')
-        axs[2].set_ylabel('prob.')
+        axs[2].set_ylabel('prob.', fontsize='large')
 
     axs[0].set_ylim((0, 180))
+    axs[0].set_yticks(np.linspace(0, 180, 7))
 
     for ii, dir_base in enumerate(dir_bases):
         axs[0].text(dx[ii] - 0.5, 185, '%s' % format_group(gmap[dir_base]),
-                    fontsize=9, family='monospace')
+                    fontsize='small', family='monospace')
 
     axs[1].set_yscale('log')
 
@@ -191,6 +193,7 @@ def save_fig(fig, filename, suffixes):
     if isinstance(suffixes, type('')):
         suffixes = [suffixes]
 
+    plt.tight_layout()
     for suffix in suffixes:
         fig.savefig(filename + suffix, dpi=300)
 
