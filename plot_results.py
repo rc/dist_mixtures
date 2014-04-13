@@ -112,11 +112,11 @@ def plot_params(fig_num, log, gmap, dir_bases=None,
     params = np.array(log.get_value('params'))
 
     if dir_bases is None:
-        dir_bases = [ii.dir_base for ii in logs[0].items]
+        dir_bases = [ii.dir_base for ii in log.items]
 
     # Select parameters corresponding to dir_bases.
     ix = np.array([ii for ii in range(params.shape[0])
-                   if logs[0].items[ii].dir_base in dir_bases])
+                   if log.items[ii].dir_base in dir_bases])
     params = params[ix]
 
     # Sort components by probabilities (descending).
