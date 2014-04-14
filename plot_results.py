@@ -283,37 +283,38 @@ def main():
         esuffix = '' if group_name is None else '_%s_%s' % (group_name, val)
         save_fig(fig, op.join(dirname, 'params_%d' % ilog + esuffix), suffixes)
 
-    fig = plot_fit_info(1, logs, 'nllf', tr_log10)
-    save_fig(fig, op.join(dirname, 'nllf'), suffixes)
-    fig = plot_fit_info(2, logs, 'aic', tr_log10)
-    save_fig(fig, op.join(dirname, 'aic'), suffixes)
-    fig = plot_fit_info(3, logs, 'bic', tr_log10)
-    save_fig(fig, op.join(dirname, 'bic'), suffixes)
-    fig = plot_fit_info(4, logs, 'chisquare', tr_log10)
-    save_fig(fig, op.join(dirname, 'chisquare'), suffixes)
-    fig = plot_fit_info(5, logs, 'chisquare p-value', tr_none,
-                        'chisquare p-value')
-    save_fig(fig, op.join(dirname, 'chisquare p-value'), suffixes)
+    if options.group is None:
+        fig = plot_fit_info(1, logs, 'nllf', tr_log10)
+        save_fig(fig, op.join(dirname, 'nllf'), suffixes)
+        fig = plot_fit_info(2, logs, 'aic', tr_log10)
+        save_fig(fig, op.join(dirname, 'aic'), suffixes)
+        fig = plot_fit_info(3, logs, 'bic', tr_log10)
+        save_fig(fig, op.join(dirname, 'bic'), suffixes)
+        fig = plot_fit_info(4, logs, 'chisquare', tr_log10)
+        save_fig(fig, op.join(dirname, 'chisquare'), suffixes)
+        fig = plot_fit_info(5, logs, 'chisquare p-value', tr_none,
+                            'chisquare p-value')
+        save_fig(fig, op.join(dirname, 'chisquare p-value'), suffixes)
 
-    fig = plot_fit_info(6, logs, 'chisquare(e)', tr_log10)
-    save_fig(fig, op.join(dirname, 'chisquare(e)'), suffixes)
-    fig = plot_fit_info(7, logs, 'chisquare(e) p-value', tr_none,
-                        'chisquare(e) p-value')
-    save_fig(fig, op.join(dirname, 'chisquare(e) p-value'), suffixes)
-    fig = plot_fit_info(8, logs, 'chisquare(e) power', tr_none,
-                        'chisquare(e) power')
-    save_fig(fig, op.join(dirname, 'chisquare(e) power'), suffixes)
+        fig = plot_fit_info(6, logs, 'chisquare(e)', tr_log10)
+        save_fig(fig, op.join(dirname, 'chisquare(e)'), suffixes)
+        fig = plot_fit_info(7, logs, 'chisquare(e) p-value', tr_none,
+                            'chisquare(e) p-value')
+        save_fig(fig, op.join(dirname, 'chisquare(e) p-value'), suffixes)
+        fig = plot_fit_info(8, logs, 'chisquare(e) power', tr_none,
+                            'chisquare(e) power')
+        save_fig(fig, op.join(dirname, 'chisquare(e) power'), suffixes)
 
-    fig = plot_fit_info(11, logs, 'nllf', tr_none, '-llf')
-    save_fig(fig, op.join(dirname, 'nllf-raw'), suffixes)
-    fig = plot_fit_info(12, logs, 'aic', tr_none, 'aic')
-    save_fig(fig, op.join(dirname, 'aic-raw'), suffixes)
-    fig = plot_fit_info(13, logs, 'bic', tr_none, 'bic')
-    save_fig(fig, op.join(dirname, 'bic-raw'), suffixes)
-    fig = plot_fit_info(14, logs, 'chisquare', tr_none, 'chisquare')
-    save_fig(fig, op.join(dirname, 'chisquare-raw'), suffixes)
-    fig = plot_fit_info(15, logs, 'chisquare(e)', tr_none, 'chisquare(e)')
-    save_fig(fig, op.join(dirname, 'chisquare(e)-raw'), suffixes)
+        fig = plot_fit_info(11, logs, 'nllf', tr_none, '-llf')
+        save_fig(fig, op.join(dirname, 'nllf-raw'), suffixes)
+        fig = plot_fit_info(12, logs, 'aic', tr_none, 'aic')
+        save_fig(fig, op.join(dirname, 'aic-raw'), suffixes)
+        fig = plot_fit_info(13, logs, 'bic', tr_none, 'bic')
+        save_fig(fig, op.join(dirname, 'bic-raw'), suffixes)
+        fig = plot_fit_info(14, logs, 'chisquare', tr_none, 'chisquare')
+        save_fig(fig, op.join(dirname, 'chisquare-raw'), suffixes)
+        fig = plot_fit_info(15, logs, 'chisquare(e)', tr_none, 'chisquare(e)')
+        save_fig(fig, op.join(dirname, 'chisquare(e)-raw'), suffixes)
 
     if options.show:
         plt.show()
