@@ -113,11 +113,15 @@ def plot_fit_info(fig_num, logs, key, transform, ylabel=None):
     return fig
 
 def plot_params(fig_num, log, gmap, dir_bases=None,
-                cut_prob=0.1, sort_x=False, select_x=None, equal_probs=False):
+                cut_prob=0.1, sort_x=False, equal_probs=False):
     params = np.array(log.get_value('params'))
 
     if dir_bases is None:
         dir_bases = [ii.dir_base for ii in log.items]
+
+    else:
+        dir_bases = [ii.dir_base for ii in log.items
+                     if ii.dir_base in dir_bases]
 
     # Select parameters corresponding to dir_bases.
     ix = np.array([ii for ii in range(params.shape[0])
