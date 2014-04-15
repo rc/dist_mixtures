@@ -18,7 +18,7 @@ def save_fig(fig, filename, suffixes):
 
 args = sys.argv[1:]
 
-same_shapes = len(args) == 1
+same_shapes = len(args) == 2
 
 if same_shapes:
     loc_range = [50, 150]
