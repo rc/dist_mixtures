@@ -337,7 +337,7 @@ For each data directory, a header is printed and then rows sorted by criteria:
 - header:
 
   dir_base | no. of parameter sets
-  id       | chi2(e) | chi2(e) p-value | chi2(e) power | llf | aic | bic values
+  id       | chi2(e) | chi2(e) p-value | chi2(e) power | -llf | aic | bic values
            for each parameter set
 
 - rows:
