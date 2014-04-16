@@ -270,12 +270,12 @@ class VonMisesMixture(GenericLikelihoodModel, Struct):
             retall=retall, **kwargs)
 
         if self.fixed_params is not None:
-            res_params = self.expandparams(result.params)
+            result.full_params = self.expandparams(result.params)
 
         else:
-            res_params = result.params
+            result.full_params = result.params
 
-        result.params = normalize_params(res_params)
+        result.full_params = normalize_params(result.full_params)
 
         #this is a bit different from the way results are updated in discrete
         #TODO: check this
@@ -682,4 +682,4 @@ class MixtureResult(GenericLikelihoodModelResults):
     '''
 
     def gof_chisquare(self, fac=1.):
-        return self.model.gof_chisquare(self.params, fac=fac)
+        return self.model.gof_chisquare(self.full_params, fac=fac)

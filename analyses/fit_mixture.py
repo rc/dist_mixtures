@@ -249,12 +249,14 @@ def log_results(log, result, source):
     The resulting mixture parameters are stored into a 2d array with rows
     [location in degrees (mu), shape (kappa), probability].
     """
-    sparams = result.model.get_summary_params(result.params)[:, [1, 0, 2]]
+    sparams = result.model.get_summary_params(result.full_params)[:, [1, 0, 2]]
     sparams[:, 0] = tr.transform_pi_deg(tr.fix_range(sparams[:, 0]),
                                         neg_shift=source.neg_shift)
     converged = result.mle_retvals['converged']
 
     fit_criteria = [-result.llf, result.aic, result.bic]
+    print 'llf / nobs:', fit_criteria[0] / result.model.endog.shape[0]
+
     chisquare = result.gof_chisquare()
 
     # Chisquare test with effect size.
@@ -263,7 +265,7 @@ def log_results(log, result, source):
     n_obs = data[:, 1].sum()
     rad_diff = data[1, 0] - data[0, 0]
 
-    pdf = result.model.pdf_mix(result.params, data[:, 0])
+    pdf = result.model.pdf_mix(result.full_params, data[:, 0])
     probs = pdf * rad_diff * n_obs
     effect_size = gof.chisquare_effectsize(data[:, 1], probs)
     chi2 = gof.chisquare(data[:, 1], probs, value=effect_size)

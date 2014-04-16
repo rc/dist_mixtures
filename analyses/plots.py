@@ -108,7 +108,7 @@ def plot_estimated_dist(output_dir, result, source, pset_id=None):
 
     xtr = lambda x: transform_pi_deg(x, neg_shift=source.neg_shift)
     rbins = transform_2pi(bins) - np.pi * (source.neg_shift == True)
-    fig = result.model.plot_dist(result.params, xtransform=xtr, bins=rbins,
+    fig = result.model.plot_dist(result.full_params, xtransform=xtr, bins=rbins,
                                  data=fdata)
     fig.axes[0].set_title('estimated distribution')
     fig.axes[0].set_xlabel('angle', fontsize='large')
@@ -129,7 +129,7 @@ def plot_estimated_dist(output_dir, result, source, pset_id=None):
 def plot_histogram_comparison(output_dir, result, source, pset_id=None):
     data, fdata, bins = source.get_source_data()
 
-    rvs, sizes = result.model.rvs_mix(result.params, size=fdata.shape[0],
+    rvs, sizes = result.model.rvs_mix(result.full_params, size=fdata.shape[0],
                                       ret_sizes=True)
     rvs = fix_range(rvs)
 
